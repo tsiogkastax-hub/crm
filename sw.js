@@ -1,10 +1,14 @@
-const CACHE = 'crm-v2';
+const CACHE = 'crm-v3';
 const ASSETS = [
   './crm_sheets.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png'
 ];
+
+self.addEventListener('message', e => {
+  if (e.data?.type === 'SKIP_WAITING') self.skipWaiting();
+});
 
 self.addEventListener('install', e => {
   e.waitUntil(
