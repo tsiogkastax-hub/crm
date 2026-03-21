@@ -12,6 +12,8 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -537,8 +539,9 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
 
 <!-- REPORTS -->
 <div id="tab-reports" class="tab-page" style="display:none">
+  <div class="mob-page-header"><h2>Αναφορές & Εξαγωγή</h2><p>Excel & PDF exports</p></div>
   <div class="topbar">
-    <div class="page-title"><h2>Αναφορές & Εξαγωγή</h2><p>Excel exports και στατιστικά</p></div>
+    <div class="page-title"><h2>Αναφορές & Εξαγωγή</h2><p>Excel & PDF exports</p></div>
   </div>
   <div class="card card-pad" style="margin-bottom:14px">
     <div class="section-title" style="margin-bottom:14px">Στοιχεία Γραφείου</div>
@@ -565,10 +568,26 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
     </div>
   </div>
   <div class="feature-grid">
+    <!-- PDF FULL REPORT -->
+    <div class="feature-card" style="grid-column:1/-1;background:linear-gradient(135deg,#1a1917 0%,#2d2d2a 100%);border-color:#3a3a36">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+        <div class="feature-ico" style="background:rgba(255,255,255,.1);flex-shrink:0">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+        </div>
+        <div>
+          <div class="feature-title" style="color:#fff;font-size:15px">Πλήρης Αναφορά PDF</div>
+          <div class="feature-desc" style="color:rgba(255,255,255,.6);margin:0">Στατιστικά, εισπράξεις, πελάτες και υπηρεσίες σε ένα επαγγελματικό PDF.</div>
+        </div>
+      </div>
+      <button class="btn" style="width:100%;justify-content:center;background:#fff;color:#1a1917;font-weight:600;padding:13px" onclick="exportFullPDF()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Εξαγωγή Πλήρους PDF
+      </button>
+    </div>
     <div class="feature-card">
       <div class="feature-ico" style="background:#ecfdf5"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
       <div class="feature-title">Αναφορά Εισπράξεων</div>
-      <div class="feature-desc">Εξαγωγή φιλτραρισμένων εισπράξεων με στοιχεία γραφείου.</div>
+      <div class="feature-desc">Εξαγωγή φιλτραρισμένων εισπράξεων.</div>
       <button class="btn btn-green" style="width:100%;justify-content:center" onclick="exportFilteredExcel()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Λήψη Excel
@@ -577,7 +596,7 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
     <div class="feature-card">
       <div class="feature-ico" style="background:#eff6ff"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
       <div class="feature-title">Αναφορά Πελατών</div>
-      <div class="feature-desc">Λίστα πελατών με υπηρεσίες, ΑΦΜ και στοιχεία επικοινωνίας.</div>
+      <div class="feature-desc">Λίστα πελατών με υπηρεσίες και στοιχεία.</div>
       <button class="btn btn-blue" style="width:100%;justify-content:center" onclick="exportClientsExcel()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Λήψη Excel
@@ -586,7 +605,7 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
     <div class="feature-card">
       <div class="feature-ico" style="background:#fffbeb"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
       <div class="feature-title">Αναφορά Υπενθυμίσεων</div>
-      <div class="feature-desc">Εξαγωγή εκκρεμών υπενθυμίσεων ταξινομημένων κατά ημερομηνία.</div>
+      <div class="feature-desc">Εκκρεμείς υπενθυμίσεις ταξινομημένες.</div>
       <button class="btn btn-sm btn-outline" style="width:100%;justify-content:center;background:#fffbeb;color:#92400e;border-color:#fcd34d" onclick="exportRemindersExcel()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Λήψη Excel
@@ -595,7 +614,7 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
     <div class="feature-card">
       <div class="feature-ico" style="background:#f5f3ff"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div>
       <div class="feature-title">Αναφορά Υπηρεσιών</div>
-      <div class="feature-desc">Όλες οι ενεργές υπηρεσίες με τιμές και περιοδικότητα.</div>
+      <div class="feature-desc">Όλες οι ενεργές υπηρεσίες με τιμές.</div>
       <button class="btn btn-sm btn-outline" style="width:100%;justify-content:center;background:#f5f3ff;color:#5b21b6;border-color:#ddd6fe" onclick="exportServicesExcel()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Λήψη Excel
@@ -1424,6 +1443,205 @@ function getReportFiltered(){
     if(c&&r.clientId!==c) return false;
     return true;
   });
+}
+
+// ===== PDF EXPORT =====
+async function exportFullPDF() {
+  toast('Δημιουργία PDF...', 'success');
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  const clients   = getClients();
+  const services  = getServices();
+  const receipts  = getReportFiltered();
+  const reminders = getReminders().filter(r => r.status === 'pending');
+  const office    = localStorage.getItem('officeName') || 'Λογιστικό Γραφείο';
+  const afm       = localStorage.getItem('officeAfm') || '';
+  const totalReceipts = receipts.reduce((s,r) => s + parseFloat(r.amount||0), 0);
+  const totalServices = services.reduce((s,sv) => s + parseFloat(sv.price||0), 0);
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('el-GR');
+  const timeStr = now.toLocaleTimeString('el-GR', {hour:'2-digit',minute:'2-digit'});
+
+  const W = 210; // A4 width mm
+  let y = 0;
+
+  // ── HEADER ──────────────────────────────────────────
+  doc.setFillColor(26, 25, 23);
+  doc.rect(0, 0, W, 38, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.text(office, 14, 16);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  if (afm) doc.text(`AFM: ${afm}`, 14, 24);
+  doc.text(`Ημερομηνία: ${dateStr} ${timeStr}`, 14, afm ? 31 : 24);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('ΠΛΗΡΗΣ ΑΝΑΦΟΡΑ', W - 14, 20, { align: 'right' });
+  doc.setTextColor(0, 0, 0);
+  y = 48;
+
+  // ── ΣΤΑΤΙΣΤΙΚΑ ───────────────────────────────────────
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(26, 25, 23);
+  doc.text('ΣΥΝΟΠΤΙΚΑ ΣΤΑΤΙΣΤΙΚΑ', 14, y);
+  y += 6;
+
+  const stats = [
+    ['Συνολικές Εισπράξεις', fmt(totalReceipts)],
+    ['Σύνολο Πελατών', String(clients.length)],
+    ['Ενεργές Υπηρεσίες', String(services.length)],
+    ['Αναμενόμενα Έσοδα', fmt(totalServices)],
+    ['Εκκρεμείς Υπενθυμίσεις', String(reminders.length)],
+  ];
+
+  doc.autoTable({
+    startY: y,
+    head: [['Δείκτης', 'Τιμή']],
+    body: stats,
+    theme: 'grid',
+    headStyles: { fillColor: [26,25,23], textColor: 255, fontStyle: 'bold', fontSize: 10 },
+    bodyStyles: { fontSize: 10 },
+    columnStyles: { 1: { fontStyle: 'bold', halign: 'right' } },
+    margin: { left: 14, right: 14 },
+    tableWidth: 90,
+  });
+  y = doc.lastAutoTable.finalY + 10;
+
+  // ── ΕΙΣΠΡΑΞΕΙΣ ───────────────────────────────────────
+  if (receipts.length > 0) {
+    if (y > 230) { doc.addPage(); y = 20; }
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(26, 25, 23);
+    doc.text(`ΕΙΣΠΡΑΞΕΙΣ (${receipts.length})`, 14, y);
+    y += 4;
+
+    doc.autoTable({
+      startY: y,
+      head: [['Ημερομηνία', 'Πελάτης', 'Υπηρεσία', 'Σημειώσεις', 'Ποσό']],
+      body: receipts.map(r => [
+        fmtDate(r.date),
+        clientName(r.clientId),
+        serviceName(r.serviceId),
+        r.notes || '—',
+        fmt(parseFloat(r.amount||0))
+      ]),
+      foot: [['', '', '', 'ΣΥΝΟΛΟ', fmt(totalReceipts)]],
+      theme: 'striped',
+      headStyles: { fillColor: [5,150,105], textColor: 255, fontStyle: 'bold', fontSize: 9 },
+      footStyles: { fillColor: [236,253,245], textColor: [5,150,105], fontStyle: 'bold', fontSize: 9 },
+      bodyStyles: { fontSize: 8.5 },
+      columnStyles: { 4: { halign: 'right', fontStyle: 'bold' } },
+      margin: { left: 14, right: 14 },
+    });
+    y = doc.lastAutoTable.finalY + 10;
+  }
+
+  // ── ΠΕΛΑΤΕΣ ──────────────────────────────────────────
+  if (clients.length > 0) {
+    if (y > 230) { doc.addPage(); y = 20; }
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(26, 25, 23);
+    doc.text(`ΠΕΛΑΤΕΣ (${clients.length})`, 14, y);
+    y += 4;
+
+    doc.autoTable({
+      startY: y,
+      head: [['Ονοματεπώνυμο', 'ΑΦΜ', 'Τηλέφωνο', 'Email', 'Υπηρεσίες']],
+      body: clients.map(c => {
+        const svcs = services.filter(s => s.clientId === c.id);
+        return [
+          c.name,
+          c.afm || '—',
+          c.phone || '—',
+          c.email || '—',
+          String(svcs.length)
+        ];
+      }),
+      theme: 'striped',
+      headStyles: { fillColor: [37,99,235], textColor: 255, fontStyle: 'bold', fontSize: 9 },
+      bodyStyles: { fontSize: 8.5 },
+      columnStyles: { 4: { halign: 'center' } },
+      margin: { left: 14, right: 14 },
+    });
+    y = doc.lastAutoTable.finalY + 10;
+  }
+
+  // ── ΥΠΗΡΕΣΙΕΣ ────────────────────────────────────────
+  if (services.length > 0) {
+    if (y > 230) { doc.addPage(); y = 20; }
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(26, 25, 23);
+    doc.text(`ΥΠΗΡΕΣΙΕΣ (${services.length})`, 14, y);
+    y += 4;
+
+    doc.autoTable({
+      startY: y,
+      head: [['Πελάτης', 'Υπηρεσία', 'Περίοδος', 'Έτος', 'Τιμή']],
+      body: services.map(s => [
+        clientName(s.clientId),
+        s.name,
+        s.periodValue || '—',
+        s.year || '—',
+        fmt(parseFloat(s.price||0))
+      ]),
+      foot: [['', '', '', 'ΣΥΝΟΛΟ', fmt(totalServices)]],
+      theme: 'striped',
+      headStyles: { fillColor: [124,58,237], textColor: 255, fontStyle: 'bold', fontSize: 9 },
+      footStyles: { fillColor: [245,243,255], textColor: [124,58,237], fontStyle: 'bold', fontSize: 9 },
+      bodyStyles: { fontSize: 8.5 },
+      columnStyles: { 4: { halign: 'right', fontStyle: 'bold' } },
+      margin: { left: 14, right: 14 },
+    });
+    y = doc.lastAutoTable.finalY + 10;
+  }
+
+  // ── ΥΠΕΝΘΥΜΙΣΕΙΣ ─────────────────────────────────────
+  if (reminders.length > 0) {
+    if (y > 230) { doc.addPage(); y = 20; }
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(26, 25, 23);
+    doc.text(`ΕΚΚΡΕΜΕΙΣ ΥΠΕΝΘΥΜΙΣΕΙΣ (${reminders.length})`, 14, y);
+    y += 4;
+
+    const todayMs = new Date().setHours(0,0,0,0);
+    doc.autoTable({
+      startY: y,
+      head: [['Προθεσμία', 'Πελάτης', 'Υπηρεσία', 'Κατάσταση', 'Σημειώσεις']],
+      body: reminders.sort((a,b) => new Date(a.dueDate)-new Date(b.dueDate)).map(r => {
+        const overdue = new Date(r.dueDate).setHours(0,0,0,0) < todayMs;
+        return [fmtDate(r.dueDate), clientName(r.clientId), serviceName(r.serviceId), overdue ? 'ΕΚΠΡΟΘΕΣΜΗ' : 'Εκκρεμής', r.notes || '—'];
+      }),
+      theme: 'striped',
+      headStyles: { fillColor: [217,119,6], textColor: 255, fontStyle: 'bold', fontSize: 9 },
+      bodyStyles: { fontSize: 8.5 },
+      margin: { left: 14, right: 14 },
+    });
+    y = doc.lastAutoTable.finalY + 10;
+  }
+
+  // ── FOOTER ───────────────────────────────────────────
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(160, 160, 160);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${office} | Εκτυπώθηκε: ${dateStr} ${timeStr}`, 14, 290);
+    doc.text(`Σελίδα ${i} / ${pageCount}`, W - 14, 290, { align: 'right' });
+    doc.setDrawColor(200, 200, 200);
+    doc.line(14, 286, W - 14, 286);
+  }
+
+  doc.save(`αναφορα_${today()}.pdf`);
+  toast('Το PDF εξήχθη!', 'success');
 }
 
 // ===== EXCEL EXPORTS =====
