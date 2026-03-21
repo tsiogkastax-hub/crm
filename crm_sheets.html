@@ -219,17 +219,120 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
 /* Print helper */
 @media print{.sidebar,.mobile-nav,.topbar-actions,.btn,.icon-btn{display:none!important}.main{margin:0;padding:0}}
 
-/* Responsive */
+/* ============================================================
+   MOBILE FIRST — complete overhaul
+   ============================================================ */
+
+/* Mobile receipt/service/reminder cards (replaces table rows) */
+.m-card{display:none;background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:10px;box-shadow:var(--shadow);position:relative}
+.m-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.m-card-title{font-size:14px;font-weight:600;color:var(--t1);flex:1;padding-right:8px}
+.m-card-amount{font-size:16px;font-weight:700;color:var(--t1);font-variant-numeric:tabular-nums;white-space:nowrap}
+.m-card-row{display:flex;align-items:center;gap:6px;margin-top:5px;font-size:12px;color:var(--t2)}
+.m-card-actions{display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--bd)}
+.m-card-actions button{flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:500;border:1px solid var(--bd);background:var(--bg3);color:var(--t1);cursor:pointer}
+.m-card-actions .del-btn{background:#fef2f2;color:#dc2626;border-color:#fecaca}
+.dark .m-card-actions .del-btn{background:#3b1515;color:#f87171;border-color:#7f1d1d}
+
+/* FAB — floating action button for mobile */
+.fab{display:none;position:fixed;bottom:84px;right:18px;width:56px;height:56px;border-radius:50%;background:var(--t1);color:var(--bg1);border:none;font-size:26px;cursor:pointer;z-index:300;box-shadow:0 4px 16px rgba(0,0,0,.2);align-items:center;justify-content:center;transition:transform .15s}
+.fab:active{transform:scale(.92)}
+
+/* Mobile page header */
+.mob-page-header{display:none;padding:16px 16px 0;margin-bottom:16px}
+.mob-page-header h2{font-size:20px;font-weight:700;color:var(--t1)}
+.mob-page-header p{font-size:12px;color:var(--t2);margin-top:3px}
+
+/* Mobile bottom sheet modal */
 @media(max-width:768px){
+  /* Layout */
   .sidebar{transform:translateX(-100%);transition:transform .25s}
   .sidebar.open{transform:translateX(0)}
-  .main{margin-left:0;padding:16px 14px 80px}
-  .stats-grid{grid-template-columns:1fr 1fr}
+  .main{margin-left:0;padding:12px 12px 90px}
   .mobile-nav{display:block}
   .feature-grid{grid-template-columns:1fr}
   .form-row,.form-row-3{grid-template-columns:1fr}
+
+  /* Nav tabs larger touch targets */
+  .mob-btn{min-width:52px;padding:8px 6px 4px}
+  .mob-btn svg{width:24px;height:24px}
+  .mob-btn span{font-size:10px}
+  .mobile-nav{padding:6px 4px 14px}
+
+  /* Stats 2 col */
+  .stats-grid{grid-template-columns:1fr 1fr;gap:10px}
+  .stat-card{padding:14px;border-radius:12px}
+  .stat-val{font-size:18px}
+  .stat-lbl{font-size:10px}
+  .stat-ico{width:36px;height:36px;border-radius:9px}
+
+  /* Hide desktop topbar title, show mobile header */
+  .topbar{display:none}
+  .mob-page-header{display:block}
+
+  /* Bigger buttons */
+  .btn{padding:12px 18px;font-size:14px;border-radius:11px}
+  .btn-sm{padding:10px 16px;font-size:13px;border-radius:10px}
+
+  /* Bigger form inputs */
+  .form-input{padding:13px 14px;font-size:15px;border-radius:11px}
+  .form-label{font-size:13px;margin-bottom:7px}
+  .form-group{margin-bottom:18px}
+  textarea.form-input{min-height:90px}
+
+  /* Modal becomes bottom sheet */
+  .modal-overlay{align-items:flex-end;padding:0}
+  .modal{border-radius:20px 20px 0 0;max-width:100%;padding:20px 20px 32px;transform:translateY(20px)}
+  .modal-overlay.open .modal{transform:translateY(0)}
+  .modal-title{font-size:18px}
+
+  /* Hide desktop tables, show mobile cards */
+  .desktop-table{display:none!important}
+  .m-card{display:block}
+
+  /* FAB visible */
+  .fab{display:flex}
+
+  /* Charts full width stacked */
+  #chart-section{grid-template-columns:1fr!important}
+  .chart-container{height:180px}
+
+  /* Client cards mobile */
+  .client-card-header{padding:14px 16px;flex-wrap:wrap;gap:10px}
+  .client-card-header .btn-sm{padding:10px 14px;font-size:13px}
+  .client-body{padding:0 16px 14px}
+
+  /* Filter bar stacked */
+  .filter-bar{gap:6px}
+  .filter-bar select.form-input{width:100%;font-size:14px;padding:11px 30px 11px 12px}
+
+  /* Sync bar smaller on mobile */
+  #sync-bar{height:36px;padding:0 12px;font-size:11px}
+  #sync-bar button{padding:3px 10px;font-size:10px}
+
+  /* Section title */
+  .section-title{font-size:15px}
+  .section-head{margin-bottom:12px}
+
+  /* Toast above nav */
+  .toast{bottom:90px;right:12px;left:12px;text-align:center}
+
+  /* Reminders */
+  .reminder-item{flex-wrap:wrap;gap:8px;padding:14px 0}
+  .reminder-item button{padding:10px 14px;font-size:13px}
+
+  /* Feature cards */
+  .feature-card{padding:16px}
+  .feature-card .btn{width:100%;justify-content:center;padding:13px}
+
+  /* Reports filters stacked */
+  .form-row-3{grid-template-columns:1fr}
 }
-@media(max-width:480px){.stats-grid{grid-template-columns:1fr}}
+
+@media(max-width:480px){
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .main{padding:10px 10px 90px}
+}
 </style>
 </head>
 <body>
@@ -288,6 +391,7 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
 
 <!-- DASHBOARD -->
 <div id="tab-dashboard" class="tab-page">
+  <div class="mob-page-header"><h2>Αρχική</h2><p>Συνολική εικόνα γραφείου</p></div>
   <div class="topbar">
     <div class="page-title"><h2>Αρχική</h2><p>Συνολική εικόνα γραφείου</p></div>
     <div class="topbar-actions">
@@ -316,11 +420,13 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
     <span class="section-title">Πρόσφατες Εισπράξεις</span>
     <span class="section-link" onclick="showTab('receipts')">Προβολή όλων →</span>
   </div>
-  <div class="card"><div class="table-wrap"><table><thead><tr><th>Ημερομηνία</th><th>Πελάτης</th><th>Υπηρεσία</th><th>Σημειώσεις</th><th>Ποσό</th></tr></thead><tbody id="recent-receipts-body"></tbody></table></div></div>
+  <div class="card desktop-table"><div class="table-wrap"><table><thead><tr><th>Ημερομηνία</th><th>Πελάτης</th><th>Υπηρεσία</th><th>Σημειώσεις</th><th>Ποσό</th></tr></thead><tbody id="recent-receipts-body"></tbody></table></div></div>
+  <div id="recent-receipts-cards"></div>
 </div>
 
 <!-- CLIENTS -->
 <div id="tab-clients" class="tab-page" style="display:none">
+  <div class="mob-page-header"><h2>Πελάτες</h2><p>Διαχείριση πελατολογίου</p></div>
   <div class="topbar">
     <div class="page-title"><h2>Πελάτες</h2><p>Διαχείριση πελατολογίου</p></div>
     <div class="topbar-actions">
@@ -335,14 +441,17 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
 
 <!-- SERVICES -->
 <div id="tab-services" class="tab-page" style="display:none">
+  <div class="mob-page-header"><h2>Υπηρεσίες</h2><p>Σύνολο ενεργών υπηρεσιών</p></div>
   <div class="topbar">
     <div class="page-title"><h2>Υπηρεσίες</h2><p>Σύνολο ενεργών υπηρεσιών</p></div>
   </div>
-  <div class="card"><div class="table-wrap"><table><thead><tr><th>Πελάτης</th><th>Υπηρεσία</th><th>Περιοδικότητα</th><th>Περίοδος</th><th>Έτος</th><th>Τιμή</th><th></th></tr></thead><tbody id="services-body"></tbody></table></div></div>
+  <div class="card desktop-table"><div class="table-wrap"><table><thead><tr><th>Πελάτης</th><th>Υπηρεσία</th><th>Περιοδικότητα</th><th>Περίοδος</th><th>Έτος</th><th>Τιμή</th><th></th></tr></thead><tbody id="services-body"></tbody></table></div></div>
+  <div id="services-cards"></div>
 </div>
 
 <!-- RECEIPTS -->
 <div id="tab-receipts" class="tab-page" style="display:none">
+  <div class="mob-page-header"><h2>Εισπράξεις</h2><p>Ιστορικό και διαχείριση</p></div>
   <div class="topbar">
     <div class="page-title"><h2>Εισπράξεις</h2><p>Ιστορικό και διαχείριση</p></div>
     <div class="topbar-actions">
@@ -368,11 +477,13 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
     </button>
   </div>
   <div id="receipts-summary" style="margin-bottom:12px;font-size:12px;color:var(--t3)"></div>
-  <div class="card"><div class="table-wrap"><table><thead><tr><th>Ημερομηνία</th><th>Πελάτης</th><th>Υπηρεσία</th><th>Σημειώσεις</th><th>Ποσό</th><th></th></tr></thead><tbody id="receipts-body"></tbody></table></div></div>
+  <div class="card desktop-table"><div class="table-wrap"><table><thead><tr><th>Ημερομηνία</th><th>Πελάτης</th><th>Υπηρεσία</th><th>Σημειώσεις</th><th>Ποσό</th><th></th></tr></thead><tbody id="receipts-body"></tbody></table></div></div>
+  <div id="receipts-cards"></div>
 </div>
 
 <!-- REMINDERS -->
 <div id="tab-reminders" class="tab-page" style="display:none">
+  <div class="mob-page-header"><h2>Υπενθυμίσεις</h2><p>Εκκρεμείς εργασίες</p></div>
   <div class="topbar">
     <div class="page-title"><h2>Υπενθυμίσεις</h2><p>Εκκρεμείς εργασίες</p></div>
     <div class="topbar-actions">
@@ -482,6 +593,11 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
 
 </main>
 
+<!-- FAB buttons (mobile only, contextual) -->
+<button class="fab" id="fab-receipt" onclick="openModal('modal-receipt')" title="Νέα Είσπραξη">+</button>
+<button class="fab" id="fab-client" onclick="openModal('modal-client')" title="Νέος Πελάτης" style="display:none">+</button>
+<button class="fab" id="fab-reminder" onclick="openModal('modal-reminder')" title="Νέα Υπενθύμιση" style="display:none">+</button>
+
 <!-- MOBILE NAV -->
 <nav class="mobile-nav">
   <div class="mobile-nav-inner">
@@ -517,6 +633,7 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
       <span class="modal-title">Προσθήκη Πελάτη</span>
       <button class="icon-btn" onclick="closeModal('modal-client')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
+    <input type="hidden" id="c-edit-id">
     <div class="form-group"><label class="form-label">Ονοματεπώνυμο / Επωνυμία *</label><input class="form-input" id="c-name" placeholder="Παπαδόπουλος Ανδρέας"></div>
     <div class="form-group"><label class="form-label">ΑΦΜ *</label><input class="form-input" id="c-afm" maxlength="9" placeholder="123456789"></div>
     <div class="form-row">
@@ -538,6 +655,7 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
       <button class="icon-btn" onclick="closeModal('modal-service')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <input type="hidden" id="svc-client-id">
+    <input type="hidden" id="svc-edit-id">
     <div class="form-row">
       <div class="form-group" style="margin:0"><label class="form-label">Υπηρεσία *</label>
         <select class="form-input" id="svc-name">
@@ -575,6 +693,7 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
     </div>
     <div id="receipt-no-clients" style="display:none;text-align:center;padding:20px 0;color:var(--t2);font-size:13px">Προσθέστε πρώτα έναν πελάτη.</div>
     <div id="receipt-form-body">
+      <input type="hidden" id="r-edit-id">
       <div class="form-group"><label class="form-label">Πελάτης *</label><select class="form-input" id="r-cli" onchange="onReceiptClientChange()"><option value="">Επιλέξτε πελάτη</option></select></div>
       <div class="form-group" id="r-svc-wrap"><label class="form-label">Υπηρεσία *</label><select class="form-input" id="r-svc" onchange="onReceiptServiceChange()"><option value="">Επιλέξτε υπηρεσία</option></select></div>
       <div class="form-row">
@@ -759,13 +878,33 @@ function saveClient(){
   const name=document.getElementById('c-name').value.trim();
   const afm=document.getElementById('c-afm').value.trim();
   if(!name||!afm){toast('Συμπληρώστε τα υποχρεωτικά πεδία','error');return;}
+  const editId=document.getElementById('c-edit-id').value;
   const clients=getClients();
-  clients.unshift({id:uid(),name,afm,phone:document.getElementById('c-phone').value.trim(),email:document.getElementById('c-email').value.trim(),createdAt:new Date().toISOString()});
-  save('clients',clients);
+  if(editId){
+    const i=clients.findIndex(c=>c.id===editId);
+    if(i>-1){clients[i]={...clients[i],name,afm,phone:document.getElementById('c-phone').value.trim(),email:document.getElementById('c-email').value.trim()};}
+    save('clients',clients);toast('Ο πελάτης ενημερώθηκε!');
+  } else {
+    clients.unshift({id:uid(),name,afm,phone:document.getElementById('c-phone').value.trim(),email:document.getElementById('c-email').value.trim(),createdAt:new Date().toISOString()});
+    save('clients',clients);toast('Ο πελάτης αποθηκεύτηκε!');
+  }
   closeModal('modal-client');
-  ['c-name','c-afm','c-phone','c-email'].forEach(i=>document.getElementById(i).value='');
-  toast('Ο πελάτης αποθηκεύτηκε!');
+  ['c-name','c-afm','c-phone','c-email','c-edit-id'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('modal-client').querySelector('.modal-title').textContent='Προσθήκη Πελάτη';
+  document.getElementById('modal-client').querySelector('.btn-primary').textContent='Αποθήκευση';
   renderPage(currentTab);
+}
+
+function editClient(id){
+  const c=getClients().find(x=>x.id===id);if(!c)return;
+  document.getElementById('c-edit-id').value=id;
+  document.getElementById('c-name').value=c.name;
+  document.getElementById('c-afm').value=c.afm;
+  document.getElementById('c-phone').value=c.phone||'';
+  document.getElementById('c-email').value=c.email||'';
+  document.getElementById('modal-client').querySelector('.modal-title').textContent='Επεξεργασία Πελάτη';
+  document.getElementById('modal-client').querySelector('.btn-primary').textContent='Αποθήκευση Αλλαγών';
+  openModal('modal-client');
 }
 
 function renderClients(){
@@ -784,8 +923,9 @@ function renderClients(){
             <div class="client-meta">ΑΦΜ: ${c.afm}${c.phone?' · '+c.phone:''}${c.email?' · '+c.email:''}</div>
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
           <span class="badge badge-gray">${svcs.length} υπηρεσίες</span>
+          <button class="btn btn-sm btn-outline" onclick="event.stopPropagation();editClient('${c.id}')">✎ Επεξεργασία</button>
           <button class="btn btn-sm btn-outline" onclick="event.stopPropagation();openServiceModal('${c.id}')">+ Υπηρεσία</button>
           <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteClient('${c.id}')">Διαγραφή</button>
         </div>
@@ -793,8 +933,9 @@ function renderClients(){
       <div id="cb-${c.id}" class="client-body" style="display:none">
         ${svcs.length?svcs.map(s=>`<div class="svc-row">
           <div><div class="svc-name">${s.name}</div><div class="svc-meta">${PERIOD_LABELS[s.periodicity]||''} · ${s.periodValue||''} ${s.year||''}</div></div>
-          <div style="display:flex;align-items:center;gap:10px">
+          <div style="display:flex;align-items:center;gap:8px">
             <span class="svc-price">${fmt(s.price)}</span>
+            <button class="btn btn-sm btn-outline" onclick="editService('${s.id}')">✎</button>
             <button class="btn btn-sm btn-danger" onclick="deleteService('${s.id}')">✕</button>
           </div>
         </div>`).join(''):'<div style="padding:16px 0;color:var(--t3);font-size:13px">Δεν υπάρχουν υπηρεσίες.</div>'}
@@ -838,10 +979,36 @@ function saveService(){
   const price=parseFloat(document.getElementById('svc-price').value);
   if(!clientId||!name||isNaN(price)){toast('Συμπληρώστε τα υποχρεωτικά πεδία','error');return;}
   const period=document.getElementById('svc-period').value;
+  const editId=document.getElementById('svc-edit-id').value;
   const services=getServices();
-  services.unshift({id:uid(),clientId,name,price,periodicity:period,periodValue:document.getElementById('svc-periodval').value||'Ετήσια',year:document.getElementById('svc-year').value,createdAt:new Date().toISOString()});
-  save('services',services);closeModal('modal-service');
-  document.getElementById('svc-price').value='';toast('Η υπηρεσία αποθηκεύτηκε!');renderPage(currentTab);
+  if(editId){
+    const i=services.findIndex(s=>s.id===editId);
+    if(i>-1){services[i]={...services[i],name,price,periodicity:period,periodValue:document.getElementById('svc-periodval').value||'Ετήσια',year:document.getElementById('svc-year').value};}
+    save('services',services);toast('Η υπηρεσία ενημερώθηκε!');
+  } else {
+    services.unshift({id:uid(),clientId,name,price,periodicity:period,periodValue:document.getElementById('svc-periodval').value||'Ετήσια',year:document.getElementById('svc-year').value,createdAt:new Date().toISOString()});
+    save('services',services);toast('Η υπηρεσία αποθηκεύτηκε!');
+  }
+  closeModal('modal-service');
+  document.getElementById('svc-price').value='';
+  document.getElementById('svc-edit-id').value='';
+  document.getElementById('modal-service').querySelector('.modal-title').textContent='Νέα Υπηρεσία';
+  renderPage(currentTab);
+}
+
+function editService(id){
+  const s=getServices().find(x=>x.id===id);if(!s)return;
+  document.getElementById('svc-edit-id').value=id;
+  document.getElementById('svc-client-id').value=s.clientId;
+  document.getElementById('svc-name').value=s.name;
+  document.getElementById('svc-price').value=s.price;
+  document.getElementById('svc-period').value=s.periodicity||'monthly';
+  const y=new Date().getFullYear();
+  document.getElementById('svc-year').innerHTML=Array.from({length:8},(_,i)=>`<option ${(y-2+i)==parseInt(s.year)?'selected':''}>${y-2+i}</option>`).join('');
+  updatePeriodValues();
+  document.getElementById('svc-periodval').value=s.periodValue||'';
+  document.getElementById('modal-service').querySelector('.modal-title').textContent='Επεξεργασία Υπηρεσίας';
+  openModal('modal-service');
 }
 function renderServices(){
   const services=getServices();const body=document.getElementById('services-body');
@@ -853,7 +1020,10 @@ function renderServices(){
     <td class="td-muted">${s.periodValue||''}</td>
     <td class="td-muted">${s.year||''}</td>
     <td class="td-mono td-bold">${fmt(s.price)}</td>
-    <td><button class="btn btn-sm btn-danger" onclick="deleteService('${s.id}')">Διαγραφή</button></td>
+    <td style="white-space:nowrap">
+      <button class="btn btn-sm btn-outline" onclick="editService('${s.id}')">✎</button>
+      <button class="btn btn-sm btn-danger" style="margin-left:4px" onclick="deleteService('${s.id}')">Διαγραφή</button>
+    </td>
   </tr>`).join('');
 }
 function deleteService(id){
@@ -896,9 +1066,38 @@ function saveReceipt(){
   const amount=parseFloat(document.getElementById('r-amount').value);
   const date=document.getElementById('r-date').value;
   if(!clientId||!serviceId||isNaN(amount)||!date){toast('Συμπληρώστε τα υποχρεωτικά πεδία','error');return;}
+  const editId=document.getElementById('r-edit-id').value;
   const receipts=getReceipts();
-  receipts.unshift({id:uid(),clientId,serviceId,amount,date,notes:document.getElementById('r-notes').value.trim(),createdAt:new Date().toISOString()});
-  save('receipts',receipts);closeModal('modal-receipt');toast('Η είσπραξη αποθηκεύτηκε!');renderPage(currentTab);
+  if(editId){
+    const i=receipts.findIndex(r=>r.id===editId);
+    if(i>-1){receipts[i]={...receipts[i],clientId,serviceId,amount,date,notes:document.getElementById('r-notes').value.trim()};}
+    save('receipts',receipts);toast('Η είσπραξη ενημερώθηκε!');
+  } else {
+    receipts.unshift({id:uid(),clientId,serviceId,amount,date,notes:document.getElementById('r-notes').value.trim(),createdAt:new Date().toISOString()});
+    save('receipts',receipts);toast('Η είσπραξη αποθηκεύτηκε!');
+  }
+  closeModal('modal-receipt');
+  document.getElementById('r-edit-id').value='';
+  document.getElementById('modal-receipt').querySelector('.modal-title').textContent='Καταγραφή Είσπραξης';
+  renderPage(currentTab);
+}
+
+function editReceipt(id){
+  const r=getReceipts().find(x=>x.id===id);if(!r)return;
+  prepReceiptModal();
+  setTimeout(()=>{
+    document.getElementById('r-edit-id').value=id;
+    document.getElementById('r-cli').value=r.clientId;
+    onReceiptClientChange();
+    setTimeout(()=>{
+      document.getElementById('r-svc').value=r.serviceId;
+      document.getElementById('r-amount').value=r.amount;
+      document.getElementById('r-date').value=r.date;
+      document.getElementById('r-notes').value=r.notes||'';
+    },50);
+    document.getElementById('modal-receipt').querySelector('.modal-title').textContent='Επεξεργασία Είσπραξης';
+  },50);
+  openModal('modal-receipt');
 }
 function getFilteredReceipts(){
   const y=document.getElementById('f-year')?.value;
@@ -932,7 +1131,10 @@ function renderReceipts(){
     <td>${serviceName(r.serviceId)}</td>
     <td class="td-muted">${r.notes||'—'}</td>
     <td class="td-mono td-bold">${fmt(r.amount)}</td>
-    <td><button class="btn btn-sm btn-danger" onclick="deleteReceipt('${r.id}')">✕</button></td>
+    <td style="white-space:nowrap">
+      <button class="btn btn-sm btn-outline" onclick="editReceipt('${r.id}')">✎</button>
+      <button class="btn btn-sm btn-danger" style="margin-left:4px" onclick="deleteReceipt('${r.id}')">✕</button>
+    </td>
   </tr>`).join('');
 }
 function deleteReceipt(id){
@@ -1149,9 +1351,49 @@ function importBackup(input){
   input.value='';
 }
 
+// ===== MOBILE CARDS =====
+function isMobile(){return window.innerWidth<=768;}
+
+function renderMobileReceiptCards(recs,containerId,showDelete=true){
+  const el=document.getElementById(containerId);if(!el)return;
+  if(!recs.length){el.innerHTML='';return;}
+  el.innerHTML=recs.map(r=>`<div class="m-card">
+    <div class="m-card-top"><div class="m-card-title">${clientName(r.clientId)}</div><div class="m-card-amount">${fmt(r.amount)}</div></div>
+    <div class="m-card-row"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${fmtDate(r.date)} <span style="color:var(--t3)">·</span> ${serviceName(r.serviceId)}</div>
+    ${r.notes?`<div class="m-card-row" style="margin-top:4px;font-style:italic;color:var(--t3)">${r.notes}</div>`:''}
+    ${showDelete?`<div class="m-card-actions"><button onclick="editReceipt('${r.id}')">✎ Επεξεργασία</button><button class="del-btn" onclick="deleteReceipt('${r.id}')">Διαγραφή</button></div>`:''}
+  </div>`).join('');
+}
+
+function renderMobileServiceCards(svcs){
+  const el=document.getElementById('services-cards');if(!el)return;
+  if(!svcs.length){el.innerHTML='';return;}
+  el.innerHTML=svcs.map(s=>`<div class="m-card">
+    <div class="m-card-top"><div class="m-card-title">${s.name}</div><div class="m-card-amount">${fmt(s.price)}</div></div>
+    <div class="m-card-row">${clientName(s.clientId)} <span style="color:var(--t3)">·</span> <span class="badge badge-blue" style="font-size:10px;padding:2px 7px">${PERIOD_LABELS[s.periodicity]||''}</span> ${s.year?`<span style="color:var(--t3)">·</span> ${s.year}`:''}</div>
+    <div class="m-card-actions"><button onclick="editService('${s.id}')">✎ Επεξεργασία</button><button class="del-btn" onclick="deleteService('${s.id}')">Διαγραφή</button></div>
+  </div>`).join('');
+}
+
+function updateFab(tab){
+  ['fab-receipt','fab-client','fab-reminder'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  if(!isMobile())return;
+  if(tab==='dashboard'||tab==='receipts'){const el=document.getElementById('fab-receipt');if(el)el.style.display='flex';}
+  if(tab==='clients'){const el=document.getElementById('fab-client');if(el)el.style.display='flex';}
+  if(tab==='reminders'){const el=document.getElementById('fab-reminder');if(el)el.style.display='flex';}
+}
+
+const _origShowTab=window.showTab;
+window.showTab=function(tab,db,mb){_origShowTab(tab,db,mb);updateFab(tab);setTimeout(()=>{if(tab==='receipts')renderMobileReceiptCards(getFilteredReceipts(),'receipts-cards');if(tab==='services')renderMobileServiceCards(getServices());if(tab==='dashboard')renderMobileReceiptCards(getReceipts().slice(0,6),'recent-receipts-cards',false);},50);};
+
+const _origRR=window.renderReceipts;
+window.renderReceipts=function(){_origRR();renderMobileReceiptCards(getFilteredReceipts(),'receipts-cards');};
+
 // ===== INIT =====
 loadFromServer().then(() => {
   renderDashboard();
+  updateFab('dashboard');
+  renderMobileReceiptCards(getReceipts().slice(0,6),'recent-receipts-cards',false);
 });
 
 // Chart responsive
