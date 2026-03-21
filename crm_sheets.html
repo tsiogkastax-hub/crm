@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Λογιστικές Εισπράξεις</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg1:#f7f6f3;--bg2:#ffffff;--bg3:#f0efe9;--bd:#e8e6df;
+  --t1:#1a1917;--t2:#6b6860;--t3:#a8a49e;
+  --acc:#2563eb;--acc2:#1d4ed8;
+  --green:#059669;--red:#dc2626;--amber:#d97706;
+  --sb:#fff;--sbd:#e8e6df;
+  --inp:#fff;--inpb:#dedad2;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.04);
+}
+.dark{
+  --bg1:#111110;--bg2:#1c1c1a;--bg3:#242422;--bd:#2e2e2b;
+  --t1:#f5f4f0;--t2:#9c9890;--t3:#5c5a54;
+  --acc:#3b82f6;--acc2:#2563eb;
+  --sb:#1c1c1a;--sbd:#2e2e2b;
+  --inp:#242422;--inpb:#3a3a36;
+  --shadow:0 1px 3px rgba(0,0,0,.3);
+  --shadow-md:0 4px 12px rgba(0,0,0,.4);
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg1);color:var(--t1);min-height:100vh;transition:background .25s,color .25s;font-size:14px;line-height:1.5}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit}
+
+/* Layout */
+.app{display:flex;min-height:100vh}
+.sidebar{width:230px;background:var(--sb);border-right:1px solid var(--sbd);padding:22px 14px;display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;transition:background .25s,border-color .25s}
+.main{margin-left:230px;flex:1;padding:28px 32px;min-height:100vh;background:var(--bg1);transition:background .25s}
+
+/* Logo */
+.logo-row{display:flex;align-items:center;gap:10px;margin-bottom:28px;padding:0 8px}
+.logo-mark{width:32px;height:32px;background:var(--t1);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .25s}
+.logo-mark svg{stroke:var(--bg1);transition:stroke .25s}
+.logo-text{font-size:13px;font-weight:600;color:var(--t1);line-height:1.25}
+.logo-sub{font-size:11px;color:var(--t3);font-weight:400}
+
+/* Nav */
+nav{flex:1;display:flex;flex-direction:column;gap:1px}
+.nav-btn{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:9px;border:1px solid transparent;background:none;cursor:pointer;width:100%;text-align:left;font-size:13px;font-weight:400;color:var(--t2);transition:all .15s}
+.nav-btn:hover{background:var(--bg3);color:var(--t1)}
+.nav-btn.active{background:var(--bg3);border-color:var(--bd);color:var(--t1);font-weight:500}
+.nav-ico{width:16px;height:16px;flex-shrink:0;stroke-width:1.75}
+
+/* Sidebar footer */
+.sb-footer{padding-top:14px;border-top:1px solid var(--sbd);display:flex;flex-direction:column;gap:1px}
+
+/* Topbar */
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.page-title h2{font-size:22px;font-weight:600;color:var(--t1)}
+.page-title p{font-size:13px;color:var(--t2);margin-top:2px}
+.topbar-actions{display:flex;align-items:center;gap:8px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:9px;border:none;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-primary{background:var(--t1);color:var(--bg1)}
+.btn-primary:hover{opacity:.85}
+.btn-outline{background:var(--bg2);color:var(--t1);border:1px solid var(--bd)}
+.btn-outline:hover{background:var(--bg3)}
+.btn-sm{padding:5px 12px;font-size:12px;border-radius:7px}
+.btn-danger{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+.dark .btn-danger{background:#3b1515;color:#f87171;border-color:#7f1d1d}
+.btn-danger:hover{background:#fee2e2}
+.dark .btn-danger:hover{background:#4a1c1c}
+.btn-green{background:var(--green);color:#fff}
+.btn-green:hover{opacity:.85}
+.btn-blue{background:var(--acc);color:#fff}
+.btn-blue:hover{background:var(--acc2)}
+.icon-btn{width:34px;height:34px;border-radius:8px;border:1px solid var(--bd);background:var(--bg2);display:flex;align-items:center;justify-content:center;color:var(--t2);cursor:pointer;transition:all .15s;flex-shrink:0}
+.icon-btn:hover{background:var(--bg3);color:var(--t1)}
+
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat-card{background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:18px;display:flex;align-items:flex-start;gap:14px;box-shadow:var(--shadow);transition:background .25s,border-color .25s}
+.stat-ico{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.stat-lbl{font-size:11px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.stat-val{font-size:21px;font-weight:600;color:var(--t1);font-variant-numeric:tabular-nums}
+
+/* Cards */
+.card{background:var(--bg2);border:1px solid var(--bd);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);transition:background .25s,border-color .25s}
+.card-pad{padding:20px}
+.card-header{padding:14px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--bd)}
+.card-title{font-size:13px;font-weight:600;color:var(--t1)}
+
+/* Table */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{padding:10px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;background:var(--bg3);border-bottom:1px solid var(--bd);white-space:nowrap}
+td{padding:11px 16px;font-size:13px;color:var(--t1);border-bottom:1px solid var(--bd);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr{transition:background .1s}
+tbody tr:hover{background:var(--bg3)}
+.td-muted{color:var(--t3);font-size:12px}
+.td-mono{font-family:'DM Mono',monospace;font-size:13px}
+.td-bold{font-weight:600}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500}
+.badge-green{background:#ecfdf5;color:#065f46}
+.dark .badge-green{background:#064e3b;color:#6ee7b7}
+.badge-blue{background:#eff6ff;color:#1e40af}
+.dark .badge-blue{background:#1e3a5f;color:#93c5fd}
+.badge-amber{background:#fffbeb;color:#92400e}
+.dark .badge-amber{background:#451a03;color:#fcd34d}
+.badge-red{background:#fef2f2;color:#991b1b}
+.dark .badge-red{background:#450a0a;color:#fca5a5}
+.badge-gray{background:var(--bg3);color:var(--t2);border:1px solid var(--bd)}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg2);border-radius:18px;padding:26px;width:100%;max-width:460px;box-shadow:var(--shadow-md);transform:scale(.96);transition:transform .2s;border:1px solid var(--bd)}
+.modal-overlay.open .modal{transform:scale(1)}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.modal-title{font-size:17px;font-weight:600;color:var(--t1)}
+
+/* Forms */
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:12px;font-weight:500;color:var(--t2);margin-bottom:5px}
+.form-input{width:100%;padding:9px 12px;background:var(--inp);border:1px solid var(--inpb);border-radius:9px;font-size:13px;color:var(--t1);outline:none;transition:border-color .15s}
+.form-input:focus{border-color:var(--acc)}
+.form-input::placeholder{color:var(--t3)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+textarea.form-input{resize:vertical;min-height:80px}
+select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a8a49e' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px}
+
+/* Client card */
+.client-card{background:var(--bg2);border:1px solid var(--bd);border-radius:14px;overflow:hidden;margin-bottom:14px;box-shadow:var(--shadow)}
+.client-card-header{padding:18px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .15s}
+.client-card-header:hover{background:var(--bg3)}
+.client-info{display:flex;align-items:center;gap:13px}
+.avatar{width:40px;height:40px;border-radius:50%;background:var(--bg3);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;color:var(--t2);flex-shrink:0;font-family:'DM Mono',monospace}
+.client-name{font-size:14px;font-weight:600;color:var(--t1)}
+.client-meta{font-size:12px;color:var(--t3);margin-top:2px}
+.client-body{padding:0 20px 18px;border-top:1px solid var(--bd)}
+.svc-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--bd)}
+.svc-row:last-child{border-bottom:none}
+.svc-name{font-size:13px;font-weight:500;color:var(--t1)}
+.svc-meta{font-size:11px;color:var(--t3);margin-top:2px}
+.svc-price{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--t1)}
+
+/* Chart */
+.chart-container{position:relative;height:200px}
+
+/* Section divider */
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.section-title{font-size:14px;font-weight:600;color:var(--t1)}
+.section-link{font-size:12px;color:var(--t3);cursor:pointer;transition:color .15s}
+.section-link:hover{color:var(--t1)}
+
+/* Backup / Reports blocks */
+.feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.feature-card{background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:20px;box-shadow:var(--shadow)}
+.feature-ico{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.feature-title{font-size:14px;font-weight:600;color:var(--t1);margin-bottom:6px}
+.feature-desc{font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:16px}
+
+/* Info box */
+.info-box{background:var(--bg3);border:1px solid var(--bd);border-radius:11px;padding:14px 16px;font-size:12px;color:var(--t2);line-height:1.6;display:flex;gap:10px;align-items:flex-start}
+
+/* Filter bar */
+.filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.filter-bar select.form-input{width:auto;padding:7px 30px 7px 10px;font-size:12px}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--t1);color:var(--bg1);padding:12px 18px;border-radius:11px;font-size:13px;font-weight:500;z-index:9999;box-shadow:var(--shadow-md);transform:translateY(80px);opacity:0;transition:all .3s;max-width:320px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:#059669}
+.toast.error{background:#dc2626}
+
+/* Mobile nav */
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--sb);border-top:1px solid var(--sbd);z-index:200;padding:6px 8px 10px}
+.mobile-nav-inner{display:flex;justify-content:space-around}
+.mob-btn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 8px;border:none;background:none;cursor:pointer;border-radius:9px;color:var(--t3);transition:color .15s;min-width:44px}
+.mob-btn.active{color:var(--acc)}
+.mob-btn svg{stroke-width:1.75}
+.mob-btn span{font-size:10px;font-weight:500}
+
+/* Empty state */
+.empty{padding:48px 24px;text-align:center;color:var(--t3)}
+.empty p{font-size:13px;margin-top:8px}
+
+/* Confirm modal */
+.confirm-msg{font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:20px}
+.confirm-actions{display:flex;gap:8px;justify-content:flex-end}
+
+/* Notif badge */
+.notif-wrap{position:relative}
+.notif-badge{position:absolute;top:-4px;right:-4px;width:16px;height:16px;background:#ef4444;border-radius:50%;font-size:10px;font-weight:600;color:#fff;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg1)}
+
+/* Reminders list */
+.reminder-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--bd)}
+.reminder-item:last-child{border-bottom:none}
+.reminder-date{font-family:'DM Mono',monospace;font-size:12px;color:var(--t2);white-space:nowrap}
+.reminder-info{flex:1}
+.reminder-title{font-size:13px;font-weight:500;color:var(--t1)}
+.reminder-sub{font-size:11px;color:var(--t3);margin-top:2px}
+
+/* Dark mode toggle in sidebar looks like nav */
+.theme-btn{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:9px;border:none;background:none;cursor:pointer;width:100%;font-family:inherit;font-size:13px;color:var(--t2);transition:all .15s}
+.theme-btn:hover{background:var(--bg3);color:var(--t1)}
+
+/* Tabs inside page */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--bd);margin-bottom:20px}
+.tab-link{padding:8px 16px;font-size:13px;font-weight:500;color:var(--t2);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.tab-link.active{color:var(--acc);border-bottom-color:var(--acc)}
+
+/* Print helper */
+@media print{.sidebar,.mobile-nav,.topbar-actions,.btn,.icon-btn{display:none!important}.main{margin:0;padding:0}}
+
+/* Responsive */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);transition:transform .25s}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0;padding:16px 14px 80px}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .mobile-nav{display:block}
+  .feature-grid{grid-template-columns:1fr}
+  .form-row,.form-row-3{grid-template-columns:1fr}
+}
+@media(max-width:480px){.stats-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="logo-row">
+    <div class="logo-mark">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+    </div>
+    <div>
+      <div class="logo-text">Λογιστικές</div>
+      <div class="logo-sub">Εισπράξεις</div>
+    </div>
+  </div>
+  <nav id="desktop-nav">
+    <button class="nav-btn active" onclick="showTab('dashboard',this)">
+      <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+      Αρχική
+    </button>
+    <button class="nav-btn" onclick="showTab('clients',this)">
+      <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Πελάτες
+    </button>
+    <button class="nav-btn" onclick="showTab('services',this)">
+      <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+      Υπηρεσίες
+    </button>
+    <button class="nav-btn" onclick="showTab('receipts',this)">
+      <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Εισπράξεις
+    </button>
+    <button class="nav-btn" onclick="showTab('reminders',this)">
+      <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      Υπενθυμίσεις
+    </button>
+    <button class="nav-btn" onclick="showTab('reports',this)">
+      <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Αναφορές
+    </button>
+    <button class="nav-btn" onclick="showTab('backup',this)">
+      <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+      Backup
+    </button>
+  </nav>
+  <div class="sb-footer">
+    <button class="theme-btn" onclick="toggleDark()">
+      <svg id="theme-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <span id="theme-lbl">Σκοτεινό θέμα</span>
+    </button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main" id="main">
+
+<!-- DASHBOARD -->
+<div id="tab-dashboard" class="tab-page">
+  <div class="topbar">
+    <div class="page-title"><h2>Αρχική</h2><p>Συνολική εικόνα γραφείου</p></div>
+    <div class="topbar-actions">
+      <button class="btn btn-outline btn-sm" onclick="openModal('modal-reminder')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        Υπενθύμιση
+      </button>
+      <button class="btn btn-primary btn-sm" onclick="openModal('modal-receipt')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Νέα Είσπραξη
+      </button>
+    </div>
+  </div>
+  <div class="stats-grid" id="stats-grid"></div>
+  <div style="display:grid;grid-template-columns:1fr 320px;gap:16px;margin-bottom:24px" id="chart-section">
+    <div class="card card-pad">
+      <div class="section-head"><span class="card-title">Εισπράξεις ανά Μήνα</span></div>
+      <div class="chart-container"><canvas id="bar-chart"></canvas></div>
+    </div>
+    <div class="card card-pad">
+      <div class="section-head"><span class="card-title">Ανά Υπηρεσία</span></div>
+      <div class="chart-container"><canvas id="pie-chart"></canvas></div>
+    </div>
+  </div>
+  <div class="section-head">
+    <span class="section-title">Πρόσφατες Εισπράξεις</span>
+    <span class="section-link" onclick="showTab('receipts')">Προβολή όλων →</span>
+  </div>
+  <div class="card"><div class="table-wrap"><table><thead><tr><th>Ημερομηνία</th><th>Πελάτης</th><th>Υπηρεσία</th><th>Σημειώσεις</th><th>Ποσό</th></tr></thead><tbody id="recent-receipts-body"></tbody></table></div></div>
+</div>
+
+<!-- CLIENTS -->
+<div id="tab-clients" class="tab-page" style="display:none">
+  <div class="topbar">
+    <div class="page-title"><h2>Πελάτες</h2><p>Διαχείριση πελατολογίου</p></div>
+    <div class="topbar-actions">
+      <button class="btn btn-primary btn-sm" onclick="openModal('modal-client')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Νέος Πελάτης
+      </button>
+    </div>
+  </div>
+  <div id="clients-list"></div>
+</div>
+
+<!-- SERVICES -->
+<div id="tab-services" class="tab-page" style="display:none">
+  <div class="topbar">
+    <div class="page-title"><h2>Υπηρεσίες</h2><p>Σύνολο ενεργών υπηρεσιών</p></div>
+  </div>
+  <div class="card"><div class="table-wrap"><table><thead><tr><th>Πελάτης</th><th>Υπηρεσία</th><th>Περιοδικότητα</th><th>Περίοδος</th><th>Έτος</th><th>Τιμή</th><th></th></tr></thead><tbody id="services-body"></tbody></table></div></div>
+</div>
+
+<!-- RECEIPTS -->
+<div id="tab-receipts" class="tab-page" style="display:none">
+  <div class="topbar">
+    <div class="page-title"><h2>Εισπράξεις</h2><p>Ιστορικό και διαχείριση</p></div>
+    <div class="topbar-actions">
+      <button class="btn btn-primary btn-sm" onclick="openModal('modal-receipt')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Νέα Είσπραξη
+      </button>
+    </div>
+  </div>
+  <div class="filter-bar">
+    <select class="form-input" id="f-year" onchange="renderReceipts()"><option value="">Όλα τα έτη</option></select>
+    <select class="form-input" id="f-month" onchange="renderReceipts()">
+      <option value="">Όλοι οι μήνες</option>
+      <option value="0">Ιανουάριος</option><option value="1">Φεβρουάριος</option><option value="2">Μάρτιος</option>
+      <option value="3">Απρίλιος</option><option value="4">Μάιος</option><option value="5">Ιούνιος</option>
+      <option value="6">Ιούλιος</option><option value="7">Αύγουστος</option><option value="8">Σεπτέμβριος</option>
+      <option value="9">Οκτώβριος</option><option value="10">Νοέμβριος</option><option value="11">Δεκέμβριος</option>
+    </select>
+    <select class="form-input" id="f-client" onchange="renderReceipts()"><option value="">Όλοι οι πελάτες</option></select>
+    <button class="btn btn-outline btn-sm" onclick="exportReceiptsExcel()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Excel
+    </button>
+  </div>
+  <div id="receipts-summary" style="margin-bottom:12px;font-size:12px;color:var(--t3)"></div>
+  <div class="card"><div class="table-wrap"><table><thead><tr><th>Ημερομηνία</th><th>Πελάτης</th><th>Υπηρεσία</th><th>Σημειώσεις</th><th>Ποσό</th><th></th></tr></thead><tbody id="receipts-body"></tbody></table></div></div>
+</div>
+
+<!-- REMINDERS -->
+<div id="tab-reminders" class="tab-page" style="display:none">
+  <div class="topbar">
+    <div class="page-title"><h2>Υπενθυμίσεις</h2><p>Εκκρεμείς εργασίες</p></div>
+    <div class="topbar-actions">
+      <button class="btn btn-primary btn-sm" onclick="openModal('modal-reminder')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Νέα Υπενθύμιση
+      </button>
+    </div>
+  </div>
+  <div class="card card-pad" id="reminders-list"></div>
+</div>
+
+<!-- REPORTS -->
+<div id="tab-reports" class="tab-page" style="display:none">
+  <div class="topbar">
+    <div class="page-title"><h2>Αναφορές & Εξαγωγή</h2><p>Excel exports και στατιστικά</p></div>
+  </div>
+  <div class="card card-pad" style="margin-bottom:14px">
+    <div class="section-title" style="margin-bottom:14px">Στοιχεία Γραφείου</div>
+    <div class="form-row">
+      <div class="form-group" style="margin:0"><label class="form-label">Επωνυμία</label><input class="form-input" id="office-name" placeholder="π.χ. Λογιστικό Γραφείο Παπαδόπουλος"></div>
+      <div class="form-group" style="margin:0"><label class="form-label">ΑΦΜ</label><input class="form-input" id="office-afm" placeholder="π.χ. 123456789"></div>
+    </div>
+    <button class="btn btn-outline btn-sm" style="margin-top:12px" onclick="saveOfficeInfo()">Αποθήκευση στοιχείων</button>
+  </div>
+  <div class="card card-pad" style="margin-bottom:14px">
+    <div class="section-title" style="margin-bottom:14px">Φίλτρα Εισπράξεων</div>
+    <div class="form-row-3">
+      <div><label class="form-label">Έτος</label><select class="form-input" id="r-year"><option value="">Όλα</option></select></div>
+      <div><label class="form-label">Μήνας</label>
+        <select class="form-input" id="r-month">
+          <option value="">Όλοι</option>
+          <option value="0">Ιανουάριος</option><option value="1">Φεβρουάριος</option><option value="2">Μάρτιος</option>
+          <option value="3">Απρίλιος</option><option value="4">Μάιος</option><option value="5">Ιούνιος</option>
+          <option value="6">Ιούλιος</option><option value="7">Αύγουστος</option><option value="8">Σεπτέμβριος</option>
+          <option value="9">Οκτώβριος</option><option value="10">Νοέμβριος</option><option value="11">Δεκέμβριος</option>
+        </select>
+      </div>
+      <div><label class="form-label">Πελάτης</label><select class="form-input" id="r-client"><option value="">Όλοι</option></select></div>
+    </div>
+  </div>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="feature-ico" style="background:#ecfdf5"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+      <div class="feature-title">Αναφορά Εισπράξεων</div>
+      <div class="feature-desc">Εξαγωγή φιλτραρισμένων εισπράξεων με στοιχεία γραφείου.</div>
+      <button class="btn btn-green" style="width:100%;justify-content:center" onclick="exportFilteredExcel()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Λήψη Excel
+      </button>
+    </div>
+    <div class="feature-card">
+      <div class="feature-ico" style="background:#eff6ff"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+      <div class="feature-title">Αναφορά Πελατών</div>
+      <div class="feature-desc">Λίστα πελατών με υπηρεσίες, ΑΦΜ και στοιχεία επικοινωνίας.</div>
+      <button class="btn btn-blue" style="width:100%;justify-content:center" onclick="exportClientsExcel()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Λήψη Excel
+      </button>
+    </div>
+    <div class="feature-card">
+      <div class="feature-ico" style="background:#fffbeb"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+      <div class="feature-title">Αναφορά Υπενθυμίσεων</div>
+      <div class="feature-desc">Εξαγωγή εκκρεμών υπενθυμίσεων ταξινομημένων κατά ημερομηνία.</div>
+      <button class="btn btn-sm btn-outline" style="width:100%;justify-content:center;background:#fffbeb;color:#92400e;border-color:#fcd34d" onclick="exportRemindersExcel()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Λήψη Excel
+      </button>
+    </div>
+    <div class="feature-card">
+      <div class="feature-ico" style="background:#f5f3ff"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div>
+      <div class="feature-title">Αναφορά Υπηρεσιών</div>
+      <div class="feature-desc">Όλες οι ενεργές υπηρεσίες με τιμές και περιοδικότητα.</div>
+      <button class="btn btn-sm btn-outline" style="width:100%;justify-content:center;background:#f5f3ff;color:#5b21b6;border-color:#ddd6fe" onclick="exportServicesExcel()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Λήψη Excel
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- BACKUP -->
+<div id="tab-backup" class="tab-page" style="display:none">
+  <div class="topbar">
+    <div class="page-title"><h2>Backup & Επαναφορά</h2><p>Εξαγωγή και εισαγωγή δεδομένων</p></div>
+  </div>
+  <div class="feature-grid" style="margin-bottom:14px">
+    <div class="feature-card">
+      <div class="feature-ico" style="background:#ecfdf5"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+      <div class="feature-title">Εξαγωγή Δεδομένων</div>
+      <div class="feature-desc">Αποθήκευση όλων των δεδομένων σε αρχείο <code style="background:var(--bg3);padding:1px 6px;border-radius:4px;font-family:'DM Mono',monospace;font-size:11px">.dat</code> για backup.</div>
+      <button class="btn btn-green" style="width:100%;justify-content:center" onclick="exportBackup()">Λήψη Backup</button>
+    </div>
+    <div class="feature-card">
+      <div class="feature-ico" style="background:#eff6ff"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="3" x2="12" y2="15"/><polyline points="17 8 12 3 7 8"/></svg></div>
+      <div class="feature-title">Εισαγωγή Δεδομένων</div>
+      <div class="feature-desc">Επαναφορά από αρχείο backup <code style="background:var(--bg3);padding:1px 6px;border-radius:4px;font-family:'DM Mono',monospace;font-size:11px">.dat</code>. <strong style="color:#dc2626">Αντικαθιστά</strong> τα υπάρχοντα δεδομένα.</div>
+      <input type="file" id="import-file" accept=".dat,.json" style="display:none" onchange="importBackup(this)">
+      <button class="btn btn-blue" style="width:100%;justify-content:center" onclick="document.getElementById('import-file').click()">Επιλογή Αρχείου</button>
+    </div>
+  </div>
+  <div class="info-box">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px;color:var(--t3)"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    Τα δεδομένα αποθηκεύονται αυτόματα στο αρχείο <code style="background:var(--bg3);padding:1px 6px;border-radius:4px;font-family:'DM Mono',monospace;font-size:11px">crm_data.json</code> στον ίδιο φάκελο με το <code style="background:var(--bg3);padding:1px 6px;border-radius:4px;font-family:'DM Mono',monospace;font-size:11px">server.py</code>. Αν ο server δεν τρέχει, χρησιμοποιείται αυτόματα ο browser ως backup.
+  </div>
+</div>
+
+</main>
+
+<!-- MOBILE NAV -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-inner">
+    <button class="mob-btn active" onclick="showTab('dashboard',null,this)">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+      <span>Αρχική</span>
+    </button>
+    <button class="mob-btn" onclick="showTab('clients',null,this)">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      <span>Πελάτες</span>
+    </button>
+    <button class="mob-btn" onclick="showTab('receipts',null,this)">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span>Εισπράξεις</span>
+    </button>
+    <button class="mob-btn" onclick="showTab('reminders',null,this)">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span>Υπενθ.</span>
+    </button>
+    <button class="mob-btn" onclick="showTab('reports',null,this)">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span>Αναφορές</span>
+    </button>
+  </div>
+</nav>
+
+<!-- ===== MODALS ===== -->
+
+<!-- CLIENT MODAL -->
+<div class="modal-overlay" id="modal-client">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Προσθήκη Πελάτη</span>
+      <button class="icon-btn" onclick="closeModal('modal-client')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="form-group"><label class="form-label">Ονοματεπώνυμο / Επωνυμία *</label><input class="form-input" id="c-name" placeholder="Παπαδόπουλος Ανδρέας"></div>
+    <div class="form-group"><label class="form-label">ΑΦΜ *</label><input class="form-input" id="c-afm" maxlength="9" placeholder="123456789"></div>
+    <div class="form-row">
+      <div class="form-group" style="margin:0"><label class="form-label">Τηλέφωνο</label><input class="form-input" id="c-phone" type="tel" placeholder="6944 123456"></div>
+      <div class="form-group" style="margin:0"><label class="form-label">Email</label><input class="form-input" id="c-email" type="email" placeholder="info@mail.gr"></div>
+    </div>
+    <div style="margin-top:20px;display:flex;gap:8px">
+      <button class="btn btn-outline" style="flex:1;justify-content:center" onclick="closeModal('modal-client')">Ακύρωση</button>
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="saveClient()">Αποθήκευση</button>
+    </div>
+  </div>
+</div>
+
+<!-- SERVICE MODAL -->
+<div class="modal-overlay" id="modal-service">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Νέα Υπηρεσία</span>
+      <button class="icon-btn" onclick="closeModal('modal-service')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <input type="hidden" id="svc-client-id">
+    <div class="form-row">
+      <div class="form-group" style="margin:0"><label class="form-label">Υπηρεσία *</label>
+        <select class="form-input" id="svc-name">
+          <option>ΤΗΡΗΣΗ ΒΙΒΛΙΩΝ</option><option>ΦΟΡΟΛΟΓΙΚΗ ΔΗΛΩΣΗ</option>
+          <option>Ε9</option><option>Α21</option><option>ΕΝΑΡΞΗ ΕΠΙΧΕΙΡΗΣΗΣ</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin:0"><label class="form-label">Τιμή (€) *</label><input class="form-input" id="svc-price" type="number" step="0.01" placeholder="0.00"></div>
+    </div>
+    <div class="form-row-3" style="margin-top:14px">
+      <div class="form-group" style="margin:0"><label class="form-label">Περιοδικότητα</label>
+        <select class="form-input" id="svc-period" onchange="updatePeriodValues()">
+          <option value="monthly">Μήνας</option><option value="quarterly">Τρίμηνο</option>
+          <option value="semiannually">Εξάμηνο</option><option value="annually">Έτος</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin:0" id="svc-periodval-wrap"><label class="form-label">Περίοδος</label><select class="form-input" id="svc-periodval"></select></div>
+      <div class="form-group" style="margin:0"><label class="form-label">Έτος</label>
+        <select class="form-input" id="svc-year"></select>
+      </div>
+    </div>
+    <div style="margin-top:20px;display:flex;gap:8px">
+      <button class="btn btn-outline" style="flex:1;justify-content:center" onclick="closeModal('modal-service')">Ακύρωση</button>
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="saveService()">Αποθήκευση</button>
+    </div>
+  </div>
+</div>
+
+<!-- RECEIPT MODAL -->
+<div class="modal-overlay" id="modal-receipt">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Καταγραφή Είσπραξης</span>
+      <button class="icon-btn" onclick="closeModal('modal-receipt')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div id="receipt-no-clients" style="display:none;text-align:center;padding:20px 0;color:var(--t2);font-size:13px">Προσθέστε πρώτα έναν πελάτη.</div>
+    <div id="receipt-form-body">
+      <div class="form-group"><label class="form-label">Πελάτης *</label><select class="form-input" id="r-cli" onchange="onReceiptClientChange()"><option value="">Επιλέξτε πελάτη</option></select></div>
+      <div class="form-group" id="r-svc-wrap"><label class="form-label">Υπηρεσία *</label><select class="form-input" id="r-svc" onchange="onReceiptServiceChange()"><option value="">Επιλέξτε υπηρεσία</option></select></div>
+      <div class="form-row">
+        <div class="form-group" style="margin:0"><label class="form-label">Ποσό (€) *</label><input class="form-input" id="r-amount" type="number" step="0.01" placeholder="0.00"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">Ημερομηνία *</label><input class="form-input" id="r-date" type="date"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Σημειώσεις</label><textarea class="form-input" id="r-notes" placeholder="Προαιρετικές σημειώσεις..."></textarea></div>
+    </div>
+    <div style="margin-top:20px;display:flex;gap:8px">
+      <button class="btn btn-outline" style="flex:1;justify-content:center" onclick="closeModal('modal-receipt')">Ακύρωση</button>
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="saveReceipt()">Αποθήκευση</button>
+    </div>
+  </div>
+</div>
+
+<!-- REMINDER MODAL -->
+<div class="modal-overlay" id="modal-reminder">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Νέα Υπενθύμιση</span>
+      <button class="icon-btn" onclick="closeModal('modal-reminder')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="form-group"><label class="form-label">Πελάτης *</label><select class="form-input" id="rem-cli" onchange="onReminderClientChange()"><option value="">Επιλέξτε πελάτη</option></select></div>
+    <div class="form-group"><label class="form-label">Υπηρεσία *</label><select class="form-input" id="rem-svc"><option value="">Επιλέξτε υπηρεσία</option></select></div>
+    <div class="form-group"><label class="form-label">Ημερομηνία Προθεσμίας *</label><input class="form-input" id="rem-date" type="date"></div>
+    <div class="form-group"><label class="form-label">Σημειώσεις</label><textarea class="form-input" id="rem-notes" placeholder="Προαιρετικές σημειώσεις..."></textarea></div>
+    <div style="margin-top:20px;display:flex;gap:8px">
+      <button class="btn btn-outline" style="flex:1;justify-content:center" onclick="closeModal('modal-reminder')">Ακύρωση</button>
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="saveReminder()">Αποθήκευση</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-header">
+      <span class="modal-title" id="confirm-title">Επιβεβαίωση</span>
+      <button class="icon-btn" onclick="closeModal('modal-confirm')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <p class="confirm-msg" id="confirm-msg"></p>
+    <div class="confirm-actions">
+      <button class="btn btn-outline btn-sm" onclick="closeModal('modal-confirm')">Ακύρωση</button>
+      <button class="btn btn-danger btn-sm" id="confirm-ok">Διαγραφή</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== GLOBALS (var = hoisted, safe for onclick attributes) =====
+var barChart = null, pieChart = null;
+var currentTab = 'dashboard';
+var isDark = localStorage.getItem('dark') === '1';
+
+// ===== DATA =====
+const KEYS = {clients:'crm_clients_v1',services:'crm_services_v1',receipts:'crm_receipts_v1',reminders:'crm_reminders_v1'};
+const SERVICE_NAMES = ['ΤΗΡΗΣΗ ΒΙΒΛΙΩΝ','ΦΟΡΟΛΟΓΙΚΗ ΔΗΛΩΣΗ','Ε9','Α21','ΕΝΑΡΞΗ ΕΠΙΧΕΙΡΗΣΗΣ'];
+const PERIOD_VALUES = {
+  monthly:['Ιανουάριος','Φεβρουάριος','Μάρτιος','Απρίλιος','Μάιος','Ιούνιος','Ιούλιος','Αύγουστος','Σεπτέμβριος','Οκτώβριος','Νοέμβριος','Δεκέμβριος'],
+  quarterly:["Α' Τρίμηνο","Β' Τρίμηνο","Γ' Τρίμηνο","Δ' Τρίμηνο"],
+  semiannually:["Α' Εξάμηνο","Β' Εξάμηνο"],
+  annually:['Ετήσια']
+};
+const PERIOD_LABELS = {monthly:'Μήνας',quarterly:'Τρίμηνο',semiannually:'Εξάμηνο',annually:'Έτος'};
+
+// ===== STORAGE: File-based via Python server =====
+const API = 'http://localhost:8765';
+var _db = {clients:[], services:[], receipts:[], reminders:[], settings:{}};
+var _dbLoaded = false;
+
+async function loadFromServer() {
+  try {
+    const r = await fetch(API + '/api/data');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    _db = await r.json();
+    _dbLoaded = true;
+    console.log('[CRM] Δεδομένα φορτώθηκαν από αρχείο');
+  } catch(e) {
+    console.warn('[CRM] Server μη διαθέσιμος, fallback σε localStorage:', e.message);
+    // Fallback to localStorage if server not running
+    _db = {
+      clients: JSON.parse(localStorage.getItem('crm_clients_v1') || '[]'),
+      services: JSON.parse(localStorage.getItem('crm_services_v1') || '[]'),
+      receipts: JSON.parse(localStorage.getItem('crm_receipts_v1') || '[]'),
+      reminders: JSON.parse(localStorage.getItem('crm_reminders_v1') || '[]'),
+      settings: {}
+    };
+    _dbLoaded = true;
+  }
+}
+
+var _saveTimer = null;
+function persistData() {
+  // Save to localStorage immediately (instant fallback)
+  localStorage.setItem('crm_clients_v1', JSON.stringify(_db.clients));
+  localStorage.setItem('crm_services_v1', JSON.stringify(_db.services));
+  localStorage.setItem('crm_receipts_v1', JSON.stringify(_db.receipts));
+  localStorage.setItem('crm_reminders_v1', JSON.stringify(_db.reminders));
+  // Debounce server save by 300ms
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(async () => {
+    try {
+      const r = await fetch(API + '/api/data', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(_db)
+      });
+      if (r.ok) console.log('[CRM] Αποθηκεύτηκε στο αρχείο');
+    } catch(e) {
+      // Server not running - data already saved to localStorage above
+    }
+  }, 300);
+}
+
+function load(k){ return _db[k] || []; }
+function save(k, d){ _db[k] = d; persistData(); }
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2)}
+function getClients(){return load('clients')}
+function getServices(){return load('services')}
+function getReceipts(){return load('receipts')}
+function getReminders(){return load('reminders')}
+function clientName(id){return getClients().find(c=>c.id===id)?.name||'Άγνωστος'}
+function serviceName(id){return getServices().find(s=>s.id===id)?.name||'Άγνωστη'}
+function fmt(n){return Number(n).toLocaleString('el-GR',{style:'currency',currency:'EUR'})}
+function fmtDate(s){if(!s)return'';const d=new Date(s);return d.toLocaleDateString('el-GR')}
+function today(){return new Date().toISOString().split('T')[0]}
+
+// ===== DARK MODE =====
+function applyDark(){document.body.classList.toggle('dark',isDark);const ico=document.getElementById('theme-ico');const lbl=document.getElementById('theme-lbl');if(isDark){ico.innerHTML='<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';lbl.textContent='Φωτεινό θέμα';}else{ico.innerHTML='<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';lbl.textContent='Σκοτεινό θέμα';}updateCharts();}
+function toggleDark(){isDark=!isDark;localStorage.setItem('dark',isDark?'1':'0');applyDark();}
+applyDark();
+
+// ===== TABS =====
+function showTab(tab, desktopBtn, mobBtn){
+  document.querySelectorAll('.tab-page').forEach(p=>p.style.display='none');
+  document.getElementById('tab-'+tab).style.display='block';
+  document.querySelectorAll('#desktop-nav .nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.mob-btn').forEach(b=>b.classList.remove('active'));
+  if(desktopBtn) desktopBtn.classList.add('active');
+  else{const idx=['dashboard','clients','services','receipts','reminders','reports','backup'].indexOf(tab);const btns=document.querySelectorAll('#desktop-nav .nav-btn');if(btns[idx])btns[idx].classList.add('active');}
+  if(mobBtn) mobBtn.classList.add('active');
+  currentTab=tab;
+  renderPage(tab);
+}
+
+function renderPage(tab){
+  if(tab==='dashboard') renderDashboard();
+  if(tab==='clients') renderClients();
+  if(tab==='services') renderServices();
+  if(tab==='receipts') renderReceipts();
+  if(tab==='reminders') renderReminders();
+  if(tab==='reports') populateReportFilters();
+}
+
+// ===== MODAL =====
+function openModal(id){
+  if(id==='modal-receipt') prepReceiptModal();
+  if(id==='modal-reminder') prepReminderModal();
+  if(id==='modal-service') prepServiceModal();
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
+
+// ===== TOAST =====
+function toast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type+' show';setTimeout(()=>t.classList.remove('show'),3000);}
+
+// ===== CONFIRM =====
+function confirm(title,msg,cb){
+  document.getElementById('confirm-title').textContent=title;
+  document.getElementById('confirm-msg').textContent=msg;
+  const btn=document.getElementById('confirm-ok');
+  btn.onclick=()=>{cb();closeModal('modal-confirm');};
+  openModal('modal-confirm');
+}
+
+// ===== CLIENTS =====
+function saveClient(){
+  const name=document.getElementById('c-name').value.trim();
+  const afm=document.getElementById('c-afm').value.trim();
+  if(!name||!afm){toast('Συμπληρώστε τα υποχρεωτικά πεδία','error');return;}
+  const clients=getClients();
+  clients.unshift({id:uid(),name,afm,phone:document.getElementById('c-phone').value.trim(),email:document.getElementById('c-email').value.trim(),createdAt:new Date().toISOString()});
+  save('clients',clients);
+  closeModal('modal-client');
+  ['c-name','c-afm','c-phone','c-email'].forEach(i=>document.getElementById(i).value='');
+  toast('Ο πελάτης αποθηκεύτηκε!');
+  renderPage(currentTab);
+}
+
+function renderClients(){
+  const clients=getClients();const services=getServices();
+  const el=document.getElementById('clients-list');
+  if(!clients.length){el.innerHTML='<div class="empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><p>Δεν υπάρχουν πελάτες. Προσθέστε τον πρώτο!</p></div>';return;}
+  el.innerHTML=clients.map(c=>{
+    const svcs=services.filter(s=>s.clientId===c.id);
+    const initials=c.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    return`<div class="client-card">
+      <div class="client-card-header" onclick="toggleClientBody('cb-${c.id}')">
+        <div class="client-info">
+          <div class="avatar">${initials}</div>
+          <div>
+            <div class="client-name">${c.name}</div>
+            <div class="client-meta">ΑΦΜ: ${c.afm}${c.phone?' · '+c.phone:''}${c.email?' · '+c.email:''}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="badge badge-gray">${svcs.length} υπηρεσίες</span>
+          <button class="btn btn-sm btn-outline" onclick="event.stopPropagation();openServiceModal('${c.id}')">+ Υπηρεσία</button>
+          <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteClient('${c.id}')">Διαγραφή</button>
+        </div>
+      </div>
+      <div id="cb-${c.id}" class="client-body" style="display:none">
+        ${svcs.length?svcs.map(s=>`<div class="svc-row">
+          <div><div class="svc-name">${s.name}</div><div class="svc-meta">${PERIOD_LABELS[s.periodicity]||''} · ${s.periodValue||''} ${s.year||''}</div></div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="svc-price">${fmt(s.price)}</span>
+            <button class="btn btn-sm btn-danger" onclick="deleteService('${s.id}')">✕</button>
+          </div>
+        </div>`).join(''):'<div style="padding:16px 0;color:var(--t3);font-size:13px">Δεν υπάρχουν υπηρεσίες.</div>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleClientBody(id){const el=document.getElementById(id);el.style.display=el.style.display==='none'?'block':'none';}
+
+function deleteClient(id){
+  confirm('Διαγραφή Πελάτη','Θα διαγραφεί ο πελάτης μαζί με όλες τις υπηρεσίες και εισπράξεις του.',()=>{
+    save('clients',getClients().filter(c=>c.id!==id));
+    save('services',getServices().filter(s=>s.clientId!==id));
+    save('receipts',getReceipts().filter(r=>r.clientId!==id));
+    save('reminders',getReminders().filter(r=>r.clientId!==id));
+    toast('Ο πελάτης διαγράφηκε.');renderPage(currentTab);
+  });
+}
+
+// ===== SERVICES =====
+function openServiceModal(clientId){
+  document.getElementById('svc-client-id').value=clientId;
+  const yearSel=document.getElementById('svc-year');
+  const y=new Date().getFullYear();
+  yearSel.innerHTML=Array.from({length:8},(_,i)=>`<option ${i===2?'selected':''}>${y-2+i}</option>`).join('');
+  updatePeriodValues();
+  openModal('modal-service');
+}
+function prepServiceModal(){updatePeriodValues();}
+function updatePeriodValues(){
+  const p=document.getElementById('svc-period').value;
+  const vals=PERIOD_VALUES[p]||[];
+  const wrap=document.getElementById('svc-periodval-wrap');
+  wrap.style.display=p==='annually'?'none':'block';
+  document.getElementById('svc-periodval').innerHTML=vals.map(v=>`<option>${v}</option>`).join('');
+}
+function saveService(){
+  const clientId=document.getElementById('svc-client-id').value;
+  const name=document.getElementById('svc-name').value;
+  const price=parseFloat(document.getElementById('svc-price').value);
+  if(!clientId||!name||isNaN(price)){toast('Συμπληρώστε τα υποχρεωτικά πεδία','error');return;}
+  const period=document.getElementById('svc-period').value;
+  const services=getServices();
+  services.unshift({id:uid(),clientId,name,price,periodicity:period,periodValue:document.getElementById('svc-periodval').value||'Ετήσια',year:document.getElementById('svc-year').value,createdAt:new Date().toISOString()});
+  save('services',services);closeModal('modal-service');
+  document.getElementById('svc-price').value='';toast('Η υπηρεσία αποθηκεύτηκε!');renderPage(currentTab);
+}
+function renderServices(){
+  const services=getServices();const body=document.getElementById('services-body');
+  if(!services.length){body.innerHTML='<tr><td colspan="7" class="empty">Δεν υπάρχουν υπηρεσίες.</td></tr>';return;}
+  body.innerHTML=services.map(s=>`<tr>
+    <td>${clientName(s.clientId)}</td>
+    <td class="td-bold">${s.name}</td>
+    <td><span class="badge badge-blue">${PERIOD_LABELS[s.periodicity]||''}</span></td>
+    <td class="td-muted">${s.periodValue||''}</td>
+    <td class="td-muted">${s.year||''}</td>
+    <td class="td-mono td-bold">${fmt(s.price)}</td>
+    <td><button class="btn btn-sm btn-danger" onclick="deleteService('${s.id}')">Διαγραφή</button></td>
+  </tr>`).join('');
+}
+function deleteService(id){
+  confirm('Διαγραφή Υπηρεσίας','Θα διαγραφεί η υπηρεσία και όλες οι εισπράξεις της.',()=>{
+    save('services',getServices().filter(s=>s.id!==id));
+    save('receipts',getReceipts().filter(r=>r.serviceId!==id));
+    save('reminders',getReminders().filter(r=>r.serviceId!==id));
+    toast('Η υπηρεσία διαγράφηκε.');renderPage(currentTab);
+  });
+}
+
+// ===== RECEIPTS =====
+function prepReceiptModal(){
+  const clients=getClients();
+  const noClients=document.getElementById('receipt-no-clients');
+  const formBody=document.getElementById('receipt-form-body');
+  if(!clients.length){noClients.style.display='block';formBody.style.display='none';return;}
+  noClients.style.display='none';formBody.style.display='block';
+  const sel=document.getElementById('r-cli');
+  sel.innerHTML='<option value="">Επιλέξτε πελάτη</option>'+clients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  document.getElementById('r-svc').innerHTML='<option value="">Επιλέξτε υπηρεσία</option>';
+  document.getElementById('r-amount').value='';
+  document.getElementById('r-date').value=today();
+  document.getElementById('r-notes').value='';
+}
+function onReceiptClientChange(){
+  const clientId=document.getElementById('r-cli').value;
+  const svcs=getServices().filter(s=>s.clientId===clientId);
+  document.getElementById('r-svc').innerHTML='<option value="">Επιλέξτε υπηρεσία</option>'+svcs.map(s=>`<option value="${s.id}">${s.name} (${fmt(s.price)})</option>`).join('');
+  document.getElementById('r-amount').value='';
+}
+function onReceiptServiceChange(){
+  const id=document.getElementById('r-svc').value;
+  const svc=getServices().find(s=>s.id===id);
+  if(svc) document.getElementById('r-amount').value=svc.price;
+}
+function saveReceipt(){
+  const clientId=document.getElementById('r-cli').value;
+  const serviceId=document.getElementById('r-svc').value;
+  const amount=parseFloat(document.getElementById('r-amount').value);
+  const date=document.getElementById('r-date').value;
+  if(!clientId||!serviceId||isNaN(amount)||!date){toast('Συμπληρώστε τα υποχρεωτικά πεδία','error');return;}
+  const receipts=getReceipts();
+  receipts.unshift({id:uid(),clientId,serviceId,amount,date,notes:document.getElementById('r-notes').value.trim(),createdAt:new Date().toISOString()});
+  save('receipts',receipts);closeModal('modal-receipt');toast('Η είσπραξη αποθηκεύτηκε!');renderPage(currentTab);
+}
+function getFilteredReceipts(){
+  const y=document.getElementById('f-year')?.value;
+  const m=document.getElementById('f-month')?.value;
+  const c=document.getElementById('f-client')?.value;
+  return getReceipts().filter(r=>{
+    const d=new Date(r.date);
+    if(y&&d.getFullYear()!==parseInt(y)) return false;
+    if(m!==''&&m!==undefined&&m!==null&&d.getMonth()!==parseInt(m)) return false;
+    if(c&&r.clientId!==c) return false;
+    return true;
+  });
+}
+function renderReceipts(){
+  // Populate year filter
+  const years=[...new Set(getReceipts().map(r=>new Date(r.date).getFullYear()))].sort((a,b)=>b-a);
+  const ySel=document.getElementById('f-year');
+  const cur=ySel.value;
+  ySel.innerHTML='<option value="">Όλα τα έτη</option>'+years.map(y=>`<option ${y==cur?'selected':''}>${y}</option>`).join('');
+  // Populate client filter
+  const cSel=document.getElementById('f-client');const curC=cSel.value;
+  cSel.innerHTML='<option value="">Όλοι οι πελάτες</option>'+getClients().map(c=>`<option value="${c.id}" ${c.id===curC?'selected':''}>${c.name}</option>`).join('');
+  const recs=getFilteredReceipts();
+  const total=recs.reduce((s,r)=>s+r.amount,0);
+  document.getElementById('receipts-summary').textContent=recs.length+' εγγραφές · Σύνολο: '+fmt(total);
+  const body=document.getElementById('receipts-body');
+  if(!recs.length){body.innerHTML='<tr><td colspan="6" class="empty">Δεν βρέθηκαν εισπράξεις.</td></tr>';return;}
+  body.innerHTML=recs.map(r=>`<tr>
+    <td class="td-mono">${fmtDate(r.date)}</td>
+    <td class="td-bold">${clientName(r.clientId)}</td>
+    <td>${serviceName(r.serviceId)}</td>
+    <td class="td-muted">${r.notes||'—'}</td>
+    <td class="td-mono td-bold">${fmt(r.amount)}</td>
+    <td><button class="btn btn-sm btn-danger" onclick="deleteReceipt('${r.id}')">✕</button></td>
+  </tr>`).join('');
+}
+function deleteReceipt(id){
+  confirm('Διαγραφή Είσπραξης','Η είσπραξη θα διαγραφεί οριστικά.',()=>{
+    save('receipts',getReceipts().filter(r=>r.id!==id));
+    toast('Η είσπραξη διαγράφηκε.');renderPage(currentTab);
+  });
+}
+
+// ===== REMINDERS =====
+function prepReminderModal(){
+  const clients=getClients();
+  document.getElementById('rem-cli').innerHTML='<option value="">Επιλέξτε πελάτη</option>'+clients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  document.getElementById('rem-svc').innerHTML='<option value="">Επιλέξτε υπηρεσία</option>';
+  document.getElementById('rem-date').value='';
+  document.getElementById('rem-notes').value='';
+}
+function onReminderClientChange(){
+  const id=document.getElementById('rem-cli').value;
+  const svcs=getServices().filter(s=>s.clientId===id);
+  document.getElementById('rem-svc').innerHTML='<option value="">Επιλέξτε υπηρεσία</option>'+svcs.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+}
+function saveReminder(){
+  const clientId=document.getElementById('rem-cli').value;
+  const serviceId=document.getElementById('rem-svc').value;
+  const dueDate=document.getElementById('rem-date').value;
+  if(!clientId||!serviceId||!dueDate){toast('Συμπληρώστε τα υποχρεωτικά πεδία','error');return;}
+  const reminders=getReminders();
+  reminders.unshift({id:uid(),clientId,serviceId,dueDate,status:'pending',notes:document.getElementById('rem-notes').value.trim(),createdAt:new Date().toISOString()});
+  save('reminders',reminders);closeModal('modal-reminder');toast('Η υπενθύμιση αποθηκεύτηκε!');renderPage(currentTab);
+}
+function renderReminders(){
+  const reminders=getReminders().filter(r=>r.status==='pending').sort((a,b)=>new Date(a.dueDate)-new Date(b.dueDate));
+  const el=document.getElementById('reminders-list');
+  if(!reminders.length){el.innerHTML='<div class="empty"><p>Δεν υπάρχουν εκκρεμείς υπενθυμίσεις.</p></div>';return;}
+  const todayMs=new Date().setHours(0,0,0,0);
+  el.innerHTML=reminders.map(r=>{
+    const due=new Date(r.dueDate).setHours(0,0,0,0);
+    const overdue=due<todayMs;
+    const badge=overdue?'<span class="badge badge-red">Εκπρόθεσμη</span>':'<span class="badge badge-amber">Εκκρεμής</span>';
+    return`<div class="reminder-item">
+      <div class="reminder-date">${fmtDate(r.dueDate)}</div>
+      <div class="reminder-info">
+        <div class="reminder-title">${clientName(r.clientId)} — ${serviceName(r.serviceId)}</div>
+        ${r.notes?`<div class="reminder-sub">${r.notes}</div>`:''}
+      </div>
+      ${badge}
+      <button class="btn btn-sm btn-green" onclick="completeReminder('${r.id}')">✓ Ολοκλήρωση</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteReminder('${r.id}')">✕</button>
+    </div>`;
+  }).join('');
+}
+function completeReminder(id){
+  const r=getReminders();const i=r.findIndex(x=>x.id===id);if(i>-1){r[i].status='completed';save('reminders',r);}
+  toast('Η υπενθύμιση ολοκληρώθηκε!');renderPage(currentTab);
+}
+function deleteReminder(id){
+  confirm('Διαγραφή Υπενθύμισης','Η υπενθύμιση θα διαγραφεί.',()=>{
+    save('reminders',getReminders().filter(r=>r.id!==id));toast('Διαγράφηκε.');renderPage(currentTab);
+  });
+}
+
+// ===== DASHBOARD =====
+function renderDashboard(){
+  const receipts=getReceipts();const services=getServices();
+  const total=receipts.reduce((s,r)=>s+r.amount,0);
+  const now=new Date();const m=now.getMonth();const y=now.getFullYear();
+  const monthly=receipts.filter(r=>{const d=new Date(r.date);return d.getMonth()===m&&d.getFullYear()===y;}).reduce((s,r)=>s+r.amount,0);
+  const annualExp=services.reduce((s,sv)=>{const mult={monthly:12,quarterly:4,semiannually:2,annually:1}[sv.periodicity]||12;return s+sv.price*mult;},0);
+  document.getElementById('stats-grid').innerHTML=`
+    <div class="stat-card"><div class="stat-ico" style="background:#ecfdf5"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div><div class="stat-lbl">Συνολικές Εισπράξεις</div><div class="stat-val">${fmt(total)}</div></div></div>
+    <div class="stat-card"><div class="stat-ico" style="background:#eff6ff"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div><div class="stat-lbl">Εισπράξεις Μήνα</div><div class="stat-val">${fmt(monthly)}</div></div></div>
+    <div class="stat-card"><div class="stat-ico" style="background:#f5f3ff"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div><div><div class="stat-lbl">Αναμενόμενα Ετήσια</div><div class="stat-val">${fmt(annualExp)}</div></div></div>
+    <div class="stat-card"><div class="stat-ico" style="background:#fafaf8;border:1px solid var(--bd)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--t2)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div><div class="stat-lbl">Πλήθος Εγγραφών</div><div class="stat-val">${receipts.length}</div></div></div>`;
+
+  // Recent receipts
+  const recent=receipts.slice(0,6);
+  const rb=document.getElementById('recent-receipts-body');
+  rb.innerHTML=recent.length?recent.map(r=>`<tr><td class="td-mono">${fmtDate(r.date)}</td><td class="td-bold">${clientName(r.clientId)}</td><td>${serviceName(r.serviceId)}</td><td class="td-muted">${r.notes||'—'}</td><td class="td-mono td-bold">${fmt(r.amount)}</td></tr>`).join(''):'<tr><td colspan="5" class="empty">Δεν υπάρχουν εισπράξεις ακόμα.</td></tr>';
+
+  updateCharts();
+}
+
+function updateCharts(){
+  const receipts=getReceipts();
+  const isDarkMode=document.body.classList.contains('dark');
+  const gridColor=isDarkMode?'rgba(255,255,255,.08)':'rgba(0,0,0,.06)';
+  const tickColor=isDarkMode?'#5c5a54':'#a8a49e';
+  const textColor=isDarkMode?'#f5f4f0':'#1a1917';
+
+  // Bar chart - monthly
+  const now=new Date();const y=now.getFullYear();
+  const months=['Ιαν','Φεβ','Μαρ','Απρ','Μάι','Ιουν','Ιουλ','Αυγ','Σεπ','Οκτ','Νοε','Δεκ'];
+  const barData=Array(12).fill(0);
+  receipts.filter(r=>new Date(r.date).getFullYear()===y).forEach(r=>barData[new Date(r.date).getMonth()]+=r.amount);
+  const barCtx=document.getElementById('bar-chart').getContext('2d');
+  if(barChart) barChart.destroy();
+  barChart=new Chart(barCtx,{type:'bar',data:{labels:months,datasets:[{data:barData,backgroundColor:isDarkMode?'rgba(248,244,240,.15)':'rgba(26,25,23,.1)',borderRadius:5,hoverBackgroundColor:isDarkMode?'rgba(59,130,246,.7)':'rgba(37,99,235,.7)'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>fmt(ctx.raw)}}},scales:{x:{grid:{display:false},ticks:{color:tickColor,font:{size:11}}},y:{grid:{color:gridColor},ticks:{color:tickColor,font:{size:11},callback:v=>fmt(v)},border:{display:false}}}}});
+
+  // Pie chart - by service
+  const svcMap={};
+  receipts.forEach(r=>{const n=serviceName(r.serviceId);svcMap[n]=(svcMap[n]||0)+r.amount;});
+  const labels=Object.keys(svcMap);const vals=Object.values(svcMap);
+  const colors=['#2563eb','#059669','#d97706','#7c3aed','#dc2626','#0891b2'];
+  const pieCtx=document.getElementById('pie-chart').getContext('2d');
+  if(pieChart) pieChart.destroy();
+  if(!labels.length){pieCtx.clearRect(0,0,pieCtx.canvas.width,pieCtx.canvas.height);return;}
+  pieChart=new Chart(pieCtx,{type:'doughnut',data:{labels,datasets:[{data:vals,backgroundColor:colors,borderWidth:2,borderColor:isDarkMode?'#1c1c1a':'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:textColor,font:{size:11},boxWidth:10,padding:8}},tooltip:{callbacks:{label:ctx=>ctx.label+': '+fmt(ctx.raw)}}},cutout:'60%'}});
+}
+
+// ===== REPORTS & FILTERS =====
+function populateReportFilters(){
+  const receipts=getReceipts();
+  const years=[...new Set(receipts.map(r=>new Date(r.date).getFullYear()))].sort((a,b)=>b-a);
+  document.getElementById('r-year').innerHTML='<option value="">Όλα</option>'+years.map(y=>`<option>${y}</option>`).join('');
+  document.getElementById('r-client').innerHTML='<option value="">Όλοι</option>'+getClients().map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  // Load saved office info
+  document.getElementById('office-name').value=localStorage.getItem('officeName')||'';
+  document.getElementById('office-afm').value=localStorage.getItem('officeAfm')||'';
+}
+function saveOfficeInfo(){
+  localStorage.setItem('officeName',document.getElementById('office-name').value);
+  localStorage.setItem('officeAfm',document.getElementById('office-afm').value);
+  toast('Τα στοιχεία αποθηκεύτηκαν!');
+}
+function getReportFiltered(){
+  const y=document.getElementById('r-year').value;
+  const m=document.getElementById('r-month').value;
+  const c=document.getElementById('r-client').value;
+  return getReceipts().filter(r=>{
+    const d=new Date(r.date);
+    if(y&&d.getFullYear()!==parseInt(y)) return false;
+    if(m!==''&&d.getMonth()!==parseInt(m)) return false;
+    if(c&&r.clientId!==c) return false;
+    return true;
+  });
+}
+
+// ===== EXCEL EXPORTS =====
+function exportReceiptsExcel(){
+  const recs=getFilteredReceipts();
+  if(!recs.length){toast('Δεν υπάρχουν εισπράξεις για εξαγωγή','error');return;}
+  const data=recs.map(r=>({'Ημερομηνία':fmtDate(r.date),'Πελάτης':clientName(r.clientId),'Υπηρεσία':serviceName(r.serviceId),'Σημειώσεις':r.notes||'','Ποσό (€)':r.amount}));
+  xlsxExport(data,'εισπράξεις');
+}
+function exportFilteredExcel(){
+  const recs=getReportFiltered();
+  if(!recs.length){toast('Δεν υπάρχουν εισπράξεις για εξαγωγή','error');return;}
+  const office=localStorage.getItem('officeName')||'';
+  const afm=localStorage.getItem('officeAfm')||'';
+  const wb=XLSX.utils.book_new();
+  const header=office?[[office],[afm?'ΑΦΜ: '+afm:''],[''],[]]:[[]];
+  const rows=[...header,['Ημερομηνία','Πελάτης','Υπηρεσία','Σημειώσεις','Ποσό (€)'],...recs.map(r=>[fmtDate(r.date),clientName(r.clientId),serviceName(r.serviceId),r.notes||'',r.amount])];
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:14},{wch:28},{wch:22},{wch:30},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws,'Εισπράξεις');
+  XLSX.writeFile(wb,`εισπράξεις_${today()}.xlsx`);
+  toast('Το Excel εξήχθη!');
+}
+function exportClientsExcel(){
+  const clients=getClients();const services=getServices();
+  if(!clients.length){toast('Δεν υπάρχουν πελάτες','error');return;}
+  const data=clients.map(c=>{
+    const svcs=services.filter(s=>s.clientId===c.id).map(s=>s.name).join(', ');
+    return{'Ονοματεπώνυμο':c.name,'ΑΦΜ':c.afm,'Τηλέφωνο':c.phone||'','Email':c.email||'','Υπηρεσίες':svcs};
+  });
+  xlsxExport(data,'πελάτες');
+}
+function exportServicesExcel(){
+  const svcs=getServices();
+  if(!svcs.length){toast('Δεν υπάρχουν υπηρεσίες','error');return;}
+  const data=svcs.map(s=>({'Πελάτης':clientName(s.clientId),'Υπηρεσία':s.name,'Περιοδικότητα':PERIOD_LABELS[s.periodicity]||'','Περίοδος':s.periodValue||'','Έτος':s.year||'','Τιμή (€)':s.price}));
+  xlsxExport(data,'υπηρεσίες');
+}
+function exportRemindersExcel(){
+  const rems=getReminders().filter(r=>r.status==='pending').sort((a,b)=>new Date(a.dueDate)-new Date(b.dueDate));
+  if(!rems.length){toast('Δεν υπάρχουν εκκρεμείς υπενθυμίσεις','error');return;}
+  const data=rems.map(r=>({'Προθεσμία':fmtDate(r.dueDate),'Πελάτης':clientName(r.clientId),'Υπηρεσία':serviceName(r.serviceId),'Σημειώσεις':r.notes||''}));
+  xlsxExport(data,'υπενθυμίσεις');
+}
+function xlsxExport(data,name){
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.json_to_sheet(data);
+  const cols=Object.keys(data[0]||{}).map(()=>({wch:22}));
+  ws['!cols']=cols;
+  XLSX.utils.book_append_sheet(wb,ws,'Δεδομένα');
+  XLSX.writeFile(wb,`${name}_${today()}.xlsx`);
+  toast('Το Excel εξήχθη!');
+}
+
+// ===== BACKUP =====
+function exportBackup(){
+  const data={clients:getClients(),services:getServices(),receipts:getReceipts(),reminders:getReminders(),exportedAt:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`crm_backup_${today()}.dat`;a.click();URL.revokeObjectURL(a.href);
+  toast('Το backup αποθηκεύτηκε!');
+}
+function importBackup(input){
+  const file=input.files[0];if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const d=JSON.parse(e.target.result);
+      if(!d.clients||!d.services||!d.receipts||!d.reminders){toast('Μη έγκυρο αρχείο backup','error');return;}
+      confirm('Εισαγωγή Backup','Θα αντικατασταθούν όλα τα υπάρχοντα δεδομένα. Συνέχεια;',()=>{
+        save('clients',d.clients);save('services',d.services);save('receipts',d.receipts);save('reminders',d.reminders);
+        toast(`Εισαγωγή επιτυχής: ${d.clients.length} πελάτες, ${d.receipts.length} εισπράξεις.`);
+        renderPage(currentTab);
+      });
+    }catch{toast('Σφάλμα ανάγνωσης αρχείου','error');}
+  };
+  reader.readAsText(file);
+  input.value='';
+}
+
+// ===== INIT =====
+loadFromServer().then(() => {
+  renderDashboard();
+});
+
+// Chart responsive
+window.addEventListener('resize',()=>{if(currentTab==='dashboard')updateCharts();});
+</script>
+</body>
+</html>
+
+<script>
+// ============================================================
+// GOOGLE SHEETS SYNC
+// ============================================================
+const SCRIPT_URL = localStorage.getItem('gscript_url') || '';
+
+let syncStatus = 'idle'; // idle | syncing | ok | error
+let syncQueue = false;
+let lastSync = null;
+
+// ---- UI ----
+function injectSyncBar() {
+  const bar = document.createElement('div');
+  bar.id = 'sync-bar';
+  bar.style.cssText = `
+    position:fixed;top:0;left:0;right:0;height:40px;
+    background:var(--bg2);border-bottom:1px solid var(--bd);
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 20px;z-index:9999;font-size:12px;
+    transition:background .25s,border-color .25s
+  `;
+  bar.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-weight:600;color:var(--t1)">☁ Google Sheets Sync</span>
+      <span id="sync-status-txt" style="color:var(--t3)">Φόρτωση...</span>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span id="sync-last" style="color:var(--t3);font-size:11px"></span>
+      <button onclick="manualSync()" style="padding:4px 12px;border-radius:7px;border:1px solid var(--bd);background:var(--bg3);color:var(--t1);font-size:11px;cursor:pointer;font-family:inherit">↻ Sync</button>
+      <button onclick="openScriptSetup()" style="padding:4px 12px;border-radius:7px;border:1px solid var(--bd);background:var(--bg3);color:var(--t1);font-size:11px;cursor:pointer;font-family:inherit">⚙ URL</button>
+    </div>
+  `;
+  document.body.prepend(bar);
+  // Push main content down
+  document.getElementById('sidebar').style.top = '40px';
+  document.getElementById('sidebar').style.height = 'calc(100vh - 40px)';
+  document.getElementById('main').style.paddingTop = '68px';
+}
+
+function setSyncStatus(status, msg) {
+  syncStatus = status;
+  const txt = document.getElementById('sync-status-txt');
+  const colors = { idle:'var(--t3)', syncing:'#d97706', ok:'#059669', error:'#dc2626' };
+  if (txt) { txt.textContent = msg; txt.style.color = colors[status] || 'var(--t3)'; }
+}
+
+function updateLastSync() {
+  lastSync = new Date();
+  const el = document.getElementById('sync-last');
+  if (el) el.textContent = 'Τελευταίο: ' + lastSync.toLocaleTimeString('el-GR');
+}
+
+// ---- Setup Modal ----
+function openScriptSetup() {
+  const url = localStorage.getItem('gscript_url') || '';
+  const overlay = document.createElement('div');
+  overlay.id = 'setup-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px';
+  overlay.innerHTML = `
+    <div style="background:var(--bg2);border-radius:16px;padding:24px;width:100%;max-width:500px;border:1px solid var(--bd)">
+      <h3 style="font-size:16px;font-weight:600;color:var(--t1);margin-bottom:8px">Google Apps Script URL</h3>
+      <p style="font-size:12px;color:var(--t2);margin-bottom:16px;line-height:1.6">Επικόλλησε το Web App URL από το Google Apps Script deployment.</p>
+      <input id="script-url-input" type="url" placeholder="https://script.google.com/macros/s/.../exec"
+        value="${url}"
+        style="width:100%;padding:9px 12px;border:1px solid var(--inpb);border-radius:9px;font-size:13px;background:var(--inp);color:var(--t1);outline:none;margin-bottom:16px;font-family:inherit">
+      <div style="display:flex;gap:8px">
+        <button onclick="document.getElementById('setup-overlay').remove()" style="flex:1;padding:9px;border-radius:9px;border:1px solid var(--bd);background:var(--bg3);color:var(--t1);cursor:pointer;font-family:inherit">Ακύρωση</button>
+        <button onclick="saveScriptUrl()" style="flex:1;padding:9px;border-radius:9px;border:none;background:var(--t1);color:var(--bg1);cursor:pointer;font-family:inherit;font-weight:500">Αποθήκευση & Σύνδεση</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  setTimeout(() => document.getElementById('script-url-input')?.focus(), 100);
+}
+
+function saveScriptUrl() {
+  const url = document.getElementById('script-url-input')?.value?.trim();
+  if (!url || !url.startsWith('https://script.google.com')) {
+    alert('Μη έγκυρο URL. Πρέπει να ξεκινά με https://script.google.com');
+    return;
+  }
+  localStorage.setItem('gscript_url', url);
+  document.getElementById('setup-overlay')?.remove();
+  toast('URL αποθηκεύτηκε! Φόρτωση δεδομένων...','success');
+  loadFromSheets();
+}
+
+// ---- API Calls ----
+async function apiCall(payload) {
+  const url = localStorage.getItem('gscript_url');
+  if (!url) return null;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'text/plain' }
+    });
+    return await res.json();
+  } catch(e) {
+    console.error('API error:', e);
+    return null;
+  }
+}
+
+async function loadFromSheets() {
+  const url = localStorage.getItem('gscript_url');
+  if (!url) { setSyncStatus('idle', 'Δεν έχει ρυθμιστεί URL'); return; }
+  setSyncStatus('syncing', 'Φόρτωση από Sheets...');
+  try {
+    const res = await fetch(url + '?action=load');
+    const json = await res.json();
+    if (json.ok && json.data) {
+      // Merge with localStorage format
+      const d = json.data;
+      if (d.clients)   localStorage.setItem('crm_clients_v1',   JSON.stringify(d.clients));
+      if (d.services)  localStorage.setItem('crm_services_v1',  JSON.stringify(d.services));
+      if (d.receipts)  localStorage.setItem('crm_receipts_v1',  JSON.stringify(d.receipts));
+      if (d.reminders) localStorage.setItem('crm_reminders_v1', JSON.stringify(d.reminders));
+      if (d.settings) {
+        if (d.settings.officeName) localStorage.setItem('officeName', d.settings.officeName);
+        if (d.settings.officeAfm)  localStorage.setItem('officeAfm',  d.settings.officeAfm);
+        if (d.settings.dark)       localStorage.setItem('dark',       d.settings.dark);
+      }
+      setSyncStatus('ok', 'Συγχρονισμένο ✓');
+      updateLastSync();
+      renderPage(currentTab);
+    } else {
+      setSyncStatus('error', 'Σφάλμα: ' + (json.error || 'Άγνωστο'));
+    }
+  } catch(e) {
+    setSyncStatus('error', 'Σφάλμα σύνδεσης');
+  }
+}
+
+async function saveToSheets() {
+  const url = localStorage.getItem('gscript_url');
+  if (!url) return;
+  setSyncStatus('syncing', 'Αποθήκευση...');
+  const data = {
+    clients:   JSON.parse(localStorage.getItem('crm_clients_v1')   || '[]'),
+    services:  JSON.parse(localStorage.getItem('crm_services_v1')  || '[]'),
+    receipts:  JSON.parse(localStorage.getItem('crm_receipts_v1')  || '[]'),
+    reminders: JSON.parse(localStorage.getItem('crm_reminders_v1') || '[]'),
+    settings: {
+      officeName: localStorage.getItem('officeName') || '',
+      officeAfm:  localStorage.getItem('officeAfm')  || '',
+      dark:       localStorage.getItem('dark')        || '0'
+    }
+  };
+  const result = await apiCall({ action: 'save', data });
+  if (result?.ok) {
+    setSyncStatus('ok', 'Αποθηκεύτηκε ✓');
+    updateLastSync();
+  } else {
+    setSyncStatus('error', 'Σφάλμα αποθήκευσης');
+    toast('Σφάλμα αποθήκευσης στο Sheets', 'error');
+  }
+}
+
+async function manualSync() {
+  await loadFromSheets();
+}
+
+// ---- Auto-save hook ----
+// Override save() functions to also sync
+const _origSaveClient = window.saveClient;
+const _origSaveService = window.saveService;
+const _origSaveReceipt = window.saveReceipt;
+const _origSaveReminder = window.saveReminder;
+const _origDeleteClient = window.deleteClient;
+const _origDeleteService = window.deleteService;
+const _origDeleteReceipt = window.deleteReceipt;
+
+function withSync(fn) {
+  return async function(...args) {
+    fn.apply(this, args);
+    await saveToSheets();
+  };
+}
+
+// Patch after DOM ready
+setTimeout(() => {
+  injectSyncBar();
+  // Auto-load if URL is set
+  if (localStorage.getItem('gscript_url')) {
+    loadFromSheets();
+  } else {
+    setSyncStatus('idle', 'Πάτα ⚙ URL για σύνδεση');
+    // Prompt setup
+    setTimeout(() => {
+      if (!localStorage.getItem('gscript_url')) openScriptSetup();
+    }, 1500);
+  }
+  // Patch save functions to auto-sync
+  const origSave = window.save;
+  window.save = function(k, d) {
+    origSave(k, d);
+    clearTimeout(window._syncTimer);
+    window._syncTimer = setTimeout(saveToSheets, 1500);
+  };
+}, 100);
+</script>
