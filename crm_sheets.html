@@ -1832,6 +1832,11 @@ async function exportFullPDF() {
       headStyles: { fillColor: [217,119,6], textColor: 255, fontStyle: 'bold', fontSize: 9 },
       bodyStyles: { fontSize: 8.5 },
       margin: { left: 14, right: 14 },
+    });
+    y = doc.lastAutoTable.finalY + 10;
+  }
+}
+
 // ===== EXCEL EXPORTS =====
 function exportReceiptsExcel(){
   const recs=getFilteredReceipts();
