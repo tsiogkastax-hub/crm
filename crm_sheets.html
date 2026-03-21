@@ -359,21 +359,6 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
 </head>
 <body>
 
-<!-- LOGIN SCREEN -->
-<div id="login-screen">
-  <div class="login-box">
-    <div class="login-logo">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-    </div>
-    <div class="login-title">Λογιστικές Εισπράξεις</div>
-    <div class="login-sub">Εισάγετε τον κωδικό πρόσβασης</div>
-    <input class="login-input" id="login-pass" type="password" placeholder="Κωδικός..." autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
-    <button class="login-btn" onclick="doLogin()">Είσοδος</button>
-    <div class="login-error" id="login-error"></div>
-    <div class="login-attempts" id="login-attempts"></div>
-  </div>
-</div>
-
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
   <div class="logo-row">
@@ -1963,20 +1948,11 @@ function logout() {
 }
 
 // ===== INIT =====
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('login-pass').focus();
+loadFromServer().then(() => {
+  renderDashboard();
+  updateFab('dashboard');
+  renderMobileReceiptCards(getReceipts().slice(0,6),'recent-receipts-cards',false);
 });
-
-if (checkSession()) {
-  document.getElementById('login-screen').style.display = 'none';
-  loadFromServer().then(() => {
-    renderDashboard();
-    updateFab('dashboard');
-    renderMobileReceiptCards(getReceipts().slice(0,6),'recent-receipts-cards',false);
-  });
-} else {
-  document.getElementById('login-screen').style.display = 'flex';
-}
 
 // Chart responsive
 window.addEventListener('resize',()=>{if(currentTab==='dashboard')updateCharts();});
