@@ -962,7 +962,13 @@ function getServices(){return load('services')}
 function getReceipts(){return load('receipts')}
 function getReminders(){return load('reminders')}
 function clientName(id){return getClients().find(c=>c.id===id)?.name||'Άγνωστος'}
-function serviceName(id){return getServices().find(s=>s.id===id)?.name||'Άγνωστη'}
+function serviceName(id){
+  const s=getServices().find(x=>x.id===id);
+  if(!s) return 'Άγνωστη';
+  const period=s.periodValue?` — ${s.periodValue}`:'';
+  const year=s.year?` ${s.year}`:'';
+  return `${s.name}${period}${year}`;
+}
 function fmt(n){return Number(n).toLocaleString('el-GR',{style:'currency',currency:'EUR'})}
 function fmtDate(s){if(!s)return'';const d=new Date(s);return d.toLocaleDateString('el-GR')}
 function today(){return new Date().toISOString().split('T')[0]}
