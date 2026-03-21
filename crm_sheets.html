@@ -12,8 +12,8 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -1447,9 +1447,218 @@ function getReportFiltered(){
 
 // ===== PDF EXPORT =====
 async function exportFullPDF() {
-  toast('Δημιουργία PDF...', 'success');
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  toast('Δημιουργία PDF... παρακαλώ περιμένετε', 'success');
+
+  const clients   = getClients();
+  const services  = getServices();
+  const receipts  = getReportFiltered();
+  const reminders = getReminders().filter(r => r.status === 'pending');
+  const office    = localStorage.getItem('officeName') || 'Λογιστικό Γραφείο';
+  const afm       = localStorage.getItem('officeAfm') || '';
+  const totalReceipts = receipts.reduce((s,r) => s + parseFloat(r.amount||0), 0);
+  const totalServices = services.reduce((s,sv) => s + parseFloat(sv.price||0), 0);
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('el-GR');
+  const timeStr = now.toLocaleTimeString('el-GR',{hour:'2-digit',minute:'2-digit'});
+  const todayMs = new Date().setHours(0,0,0,0);
+
+  // Build HTML report
+  const html = `
+  <div style="font-family:'DM Sans',Arial,sans-serif;padding:32px;max-width:900px;margin:0 auto;background:#fff;color:#1a1917">
+    <!-- HEADER -->
+    <div style="background:#1a1917;color:#fff;padding:24px 28px;border-radius:12px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:20px;font-weight:700">${office}</div>
+        ${afm?`<div style="font-size:13px;opacity:.7;margin-top:4px">ΑΦΜ: ${afm}</div>`:''}
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:14px;font-weight:600">ΠΛΗΡΗΣ ΑΝΑΦΟΡΑ</div>
+        <div style="font-size:12px;opacity:.7;margin-top:4px">${dateStr} ${timeStr}</div>
+      </div>
+    </div>
+
+    <!-- ΣΤΑΤΙΣΤΙΚΑ -->
+    <div style="font-size:14px;font-weight:700;margin-bottom:10px;color:#1a1917">ΣΥΝΟΠΤΙΚΑ ΣΤΑΤΙΣΤΙΚΑ</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px">
+      ${[
+        ['Συνολικές Εισπράξεις', fmt(totalReceipts), '#ecfdf5','#059669'],
+        ['Σύνολο Πελατών', clients.length, '#eff6ff','#2563eb'],
+        ['Ενεργές Υπηρεσίες', services.length, '#f5f3ff','#7c3aed'],
+        ['Αναμενόμενα Έσοδα', fmt(totalServices), '#fffbeb','#d97706'],
+      ].map(([lbl,val,bg,col])=>`
+        <div style="background:${bg};border-radius:10px;padding:14px">
+          <div style="font-size:10px;font-weight:600;color:${col};text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">${lbl}</div>
+          <div style="font-size:18px;font-weight:700;color:#1a1917">${val}</div>
+        </div>`).join('')}
+    </div>
+
+    <!-- ΕΙΣΠΡΑΞΕΙΣ -->
+    ${receipts.length ? `
+    <div style="font-size:14px;font-weight:700;margin-bottom:10px;color:#1a1917">ΕΙΣΠΡΑΞΕΙΣ (${receipts.length})</div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:24px;font-size:12px">
+      <thead>
+        <tr style="background:#059669;color:#fff">
+          <th style="padding:9px 10px;text-align:left;border-radius:0">Ημερομηνία</th>
+          <th style="padding:9px 10px;text-align:left">Πελάτης</th>
+          <th style="padding:9px 10px;text-align:left">Υπηρεσία</th>
+          <th style="padding:9px 10px;text-align:left">Σημειώσεις</th>
+          <th style="padding:9px 10px;text-align:right">Ποσό</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${receipts.map((r,i)=>`
+        <tr style="background:${i%2?'#f9f9f7':'#fff'}">
+          <td style="padding:8px 10px;border-bottom:1px solid #eee">${fmtDate(r.date)}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #eee;font-weight:600">${clientName(r.clientId)}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #eee">${serviceName(r.serviceId)}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #eee;color:#888">${r.notes||'—'}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:right;font-weight:700">${fmt(parseFloat(r.amount||0))}</td>
+        </tr>`).join('')}
+        <tr style="background:#ecfdf5">
+          <td colspan="4" style="padding:9px 10px;font-weight:700;text-align:right;color:#059669">ΣΥΝΟΛΟ</td>
+          <td style="padding:9px 10px;font-weight:700;text-align:right;color:#059669">${fmt(totalReceipts)}</td>
+        </tr>
+      </tbody>
+    </table>` : ''}
+
+    <!-- ΠΕΛΑΤΕΣ -->
+    ${clients.length ? `
+    <div style="font-size:14px;font-weight:700;margin-bottom:10px;color:#1a1917">ΠΕΛΑΤΕΣ (${clients.length})</div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:24px;font-size:12px">
+      <thead>
+        <tr style="background:#2563eb;color:#fff">
+          <th style="padding:9px 10px;text-align:left">Ονοματεπώνυμο</th>
+          <th style="padding:9px 10px;text-align:left">ΑΦΜ</th>
+          <th style="padding:9px 10px;text-align:left">Τηλέφωνο</th>
+          <th style="padding:9px 10px;text-align:left">Email</th>
+          <th style="padding:9px 10px;text-align:center">Υπηρεσίες</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${clients.map((c,i)=>{
+          const svcs=services.filter(s=>s.clientId===c.id);
+          return `<tr style="background:${i%2?'#f9f9f7':'#fff'}">
+            <td style="padding:8px 10px;border-bottom:1px solid #eee;font-weight:600">${c.name}</td>
+            <td style="padding:8px 10px;border-bottom:1px solid #eee;font-family:monospace">${c.afm||'—'}</td>
+            <td style="padding:8px 10px;border-bottom:1px solid #eee">${c.phone||'—'}</td>
+            <td style="padding:8px 10px;border-bottom:1px solid #eee">${c.email||'—'}</td>
+            <td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:center;font-weight:700">${svcs.length}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>` : ''}
+
+    <!-- ΥΠΗΡΕΣΙΕΣ -->
+    ${services.length ? `
+    <div style="font-size:14px;font-weight:700;margin-bottom:10px;color:#1a1917">ΥΠΗΡΕΣΙΕΣ (${services.length})</div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:24px;font-size:12px">
+      <thead>
+        <tr style="background:#7c3aed;color:#fff">
+          <th style="padding:9px 10px;text-align:left">Πελάτης</th>
+          <th style="padding:9px 10px;text-align:left">Υπηρεσία</th>
+          <th style="padding:9px 10px;text-align:left">Περίοδος</th>
+          <th style="padding:9px 10px;text-align:left">Έτος</th>
+          <th style="padding:9px 10px;text-align:right">Τιμή</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${services.map((s,i)=>`
+        <tr style="background:${i%2?'#f9f9f7':'#fff'}">
+          <td style="padding:8px 10px;border-bottom:1px solid #eee;font-weight:600">${clientName(s.clientId)}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #eee">${s.name}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #eee">${s.periodValue||'—'}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #eee">${s.year||'—'}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:right;font-weight:700">${fmt(parseFloat(s.price||0))}</td>
+        </tr>`).join('')}
+        <tr style="background:#f5f3ff">
+          <td colspan="4" style="padding:9px 10px;font-weight:700;text-align:right;color:#7c3aed">ΣΥΝΟΛΟ</td>
+          <td style="padding:9px 10px;font-weight:700;text-align:right;color:#7c3aed">${fmt(totalServices)}</td>
+        </tr>
+      </tbody>
+    </table>` : ''}
+
+    <!-- ΥΠΕΝΘΥΜΙΣΕΙΣ -->
+    ${reminders.length ? `
+    <div style="font-size:14px;font-weight:700;margin-bottom:10px;color:#1a1917">ΕΚΚΡΕΜΕΙΣ ΥΠΕΝΘΥΜΙΣΕΙΣ (${reminders.length})</div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:24px;font-size:12px">
+      <thead>
+        <tr style="background:#d97706;color:#fff">
+          <th style="padding:9px 10px;text-align:left">Προθεσμία</th>
+          <th style="padding:9px 10px;text-align:left">Πελάτης</th>
+          <th style="padding:9px 10px;text-align:left">Υπηρεσία</th>
+          <th style="padding:9px 10px;text-align:center">Κατάσταση</th>
+          <th style="padding:9px 10px;text-align:left">Σημειώσεις</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${reminders.sort((a,b)=>new Date(a.dueDate)-new Date(b.dueDate)).map((r,i)=>{
+          const overdue=new Date(r.dueDate).setHours(0,0,0,0)<todayMs;
+          return `<tr style="background:${i%2?'#f9f9f7':'#fff'}">
+            <td style="padding:8px 10px;border-bottom:1px solid #eee;font-weight:600">${fmtDate(r.dueDate)}</td>
+            <td style="padding:8px 10px;border-bottom:1px solid #eee">${clientName(r.clientId)}</td>
+            <td style="padding:8px 10px;border-bottom:1px solid #eee">${serviceName(r.serviceId)}</td>
+            <td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:center">
+              <span style="background:${overdue?'#fef2f2':'#fffbeb'};color:${overdue?'#dc2626':'#d97706'};padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600">
+                ${overdue?'ΕΚΠΡΟΘΕΣΜΗ':'Εκκρεμής'}
+              </span>
+            </td>
+            <td style="padding:8px 10px;border-bottom:1px solid #eee;color:#888">${r.notes||'—'}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>` : ''}
+
+    <!-- FOOTER -->
+    <div style="border-top:1px solid #e5e5e5;padding-top:12px;margin-top:8px;display:flex;justify-content:space-between;font-size:11px;color:#aaa">
+      <span>${office}${afm?' · ΑΦΜ: '+afm:''}</span>
+      <span>Εκτυπώθηκε: ${dateStr} ${timeStr}</span>
+    </div>
+  </div>`;
+
+  // Render to canvas then PDF
+  const container = document.createElement('div');
+  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:900px;background:#fff';
+  container.innerHTML = html;
+  document.body.appendChild(container);
+
+  try {
+    const canvas = await html2canvas(container, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+      width: 900,
+    });
+
+    const { jsPDF } = window.jspdf;
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    const pdfW = 210; // A4 mm
+    const pdfH = (canvas.height * pdfW) / canvas.width;
+    const pageH = 297; // A4 height mm
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    let y = 0;
+    let remaining = pdfH;
+    let page = 0;
+
+    while (remaining > 0) {
+      if (page > 0) doc.addPage();
+      const sliceH = Math.min(pageH, remaining);
+      doc.addImage(imgData, 'JPEG', 0, -y, pdfW, pdfH);
+      y += pageH;
+      remaining -= pageH;
+      page++;
+    }
+
+    doc.save(`αναφορα_${today()}.pdf`);
+    toast('Το PDF εξήχθη επιτυχώς!', 'success');
+  } catch(e) {
+    console.error(e);
+    toast('Σφάλμα δημιουργίας PDF', 'error');
+  } finally {
+    document.body.removeChild(container);
+  }
+}
 
   const clients   = getClients();
   const services  = getServices();
@@ -1623,27 +1832,6 @@ async function exportFullPDF() {
       headStyles: { fillColor: [217,119,6], textColor: 255, fontStyle: 'bold', fontSize: 9 },
       bodyStyles: { fontSize: 8.5 },
       margin: { left: 14, right: 14 },
-    });
-    y = doc.lastAutoTable.finalY + 10;
-  }
-
-  // ── FOOTER ───────────────────────────────────────────
-  const pageCount = doc.internal.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setFontSize(8);
-    doc.setTextColor(160, 160, 160);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`${office} | Εκτυπώθηκε: ${dateStr} ${timeStr}`, 14, 290);
-    doc.text(`Σελίδα ${i} / ${pageCount}`, W - 14, 290, { align: 'right' });
-    doc.setDrawColor(200, 200, 200);
-    doc.line(14, 286, W - 14, 286);
-  }
-
-  doc.save(`αναφορα_${today()}.pdf`);
-  toast('Το PDF εξήχθη!', 'success');
-}
-
 // ===== EXCEL EXPORTS =====
 function exportReceiptsExcel(){
   const recs=getFilteredReceipts();
