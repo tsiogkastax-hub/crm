@@ -843,9 +843,14 @@ async function doLogin() {
     localStorage.setItem('crm_session', Date.now().toString());
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('login-pass').value = '';
-    // Init app after login
+    // Φόρτωσε την εφαρμογή
+    loadFromServer().then(() => {
+      renderDashboard();
+      updateFab('dashboard');
+      renderMobileReceiptCards(getReceipts().slice(0,6),'recent-receipts-cards',false);
+    });
     if (localStorage.getItem('gscript_url')) loadFromSheets();
-    else setTimeout(() => openScriptSetup(), 500);
+    else setTimeout(() => openScriptSetup(), 800);
   } else {
     failedAttempts++;
     document.getElementById('login-pass').value = '';
@@ -887,14 +892,7 @@ function checkSession() {
   return false;
 }
 
-// Auto-focus password field
-document.getElementById('login-pass').focus();
-
-// Check existing session
-if (!checkSession()) {
-  // Show login
-  document.getElementById('login-screen').style.display = 'flex';
-}
+// Auto-focus και session check γίνονται στο INIT παρακάτω
 
 // ===== DATA =====
 const KEYS = {clients:'crm_clients_v1',services:'crm_services_v1',receipts:'crm_receipts_v1',reminders:'crm_reminders_v1'};
@@ -1558,12 +1556,19 @@ function logout() {
 }
 
 // ===== INIT =====
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('login-pass').focus();
+});
+
 if (checkSession()) {
+  document.getElementById('login-screen').style.display = 'none';
   loadFromServer().then(() => {
     renderDashboard();
     updateFab('dashboard');
     renderMobileReceiptCards(getReceipts().slice(0,6),'recent-receipts-cards',false);
   });
+} else {
+  document.getElementById('login-screen').style.display = 'flex';
 }
 
 // Chart responsive
