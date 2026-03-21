@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Λογιστικές Εισπράξεις</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a1917">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CRM">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -1398,6 +1403,44 @@ loadFromServer().then(() => {
 
 // Chart responsive
 window.addEventListener('resize',()=>{if(currentTab==='dashboard')updateCharts();});
+// ===== PWA INSTALL PROMPT =====
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Show install button in sync bar
+  const installBtn = document.getElementById('install-btn');
+  if (installBtn) installBtn.style.display = 'inline-flex';
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredPrompt = null;
+  const installBtn = document.getElementById('install-btn');
+  if (installBtn) installBtn.style.display = 'none';
+  toast('Η εφαρμογή εγκαταστάθηκε! ✓', 'success');
+});
+
+function installApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(result => {
+      if (result.outcome === 'accepted') toast('Εγκατάσταση...', 'success');
+      deferredPrompt = null;
+    });
+  } else {
+    toast('Χρησιμοποίησε ⋮ → Add to Home Screen', 'error');
+  }
+}
+
+// ===== SERVICE WORKER =====
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(() => console.log('SW registered'))
+      .catch(e => console.log('SW error:', e));
+  });
+}
 </script>
 </body>
 </html>
@@ -1430,6 +1473,7 @@ function injectSyncBar() {
     </div>
     <div style="display:flex;gap:8px;align-items:center">
       <span id="sync-last" style="color:var(--t3);font-size:11px"></span>
+      <button onclick="installApp()" id="install-btn" style="display:none;padding:4px 12px;border-radius:7px;border:1px solid var(--acc);background:var(--acc);color:#fff;font-size:11px;cursor:pointer;font-family:inherit;align-items:center;gap:4px">⬇ Εγκατάσταση</button>
       <button onclick="manualSync()" style="padding:4px 12px;border-radius:7px;border:1px solid var(--bd);background:var(--bg3);color:var(--t1);font-size:11px;cursor:pointer;font-family:inherit">↻ Sync</button>
       <button onclick="openScriptSetup()" style="padding:4px 12px;border-radius:7px;border:1px solid var(--bd);background:var(--bg3);color:var(--t1);font-size:11px;cursor:pointer;font-family:inherit">⚙ URL</button>
     </div>
