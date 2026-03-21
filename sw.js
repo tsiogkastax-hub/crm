@@ -1,4 +1,4 @@
-const CACHE = 'crm-v3';
+const CACHE = 'crm-v4';
 const ASSETS = [
   './crm_sheets.html',
   './manifest.json',
@@ -35,6 +35,18 @@ self.addEventListener('fetch', e => {
     );
     return;
   }
+  // HTML files — always network first, fallback to cache
+  if (e.request.destination === 'document' || e.request.url.endsWith('.html')) {
+    e.respondWith(
+      fetch(e.request).then(res => {
+        const clone = res.clone();
+        caches.open(CACHE).then(c => c.put(e.request, clone));
+        return res;
+      }).catch(() => caches.match(e.request))
+    );
+    return;
+  }
+  // Other assets — cache first
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;
