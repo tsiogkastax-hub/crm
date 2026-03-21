@@ -834,35 +834,25 @@ var isDark = localStorage.getItem('dark') === '1';
 // Ο κωδικός αποθηκεύεται ως SHA-256 hash — ποτέ σε plaintext
 // Default κωδικός: crm2026 — ΑΛΛΑΞΕ ΤΟΝ από τις Ρυθμίσεις μέσα στην εφαρμογή
 
-const DEFAULT_HASH = 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3'; // 123
+const DEFAULT_PASS = '123';
 let failedAttempts = 0;
 let lockUntil = 0;
 
-async function sha256(str) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-}
-
-async function doLogin() {
+function doLogin() {
   const now = Date.now();
   if (lockUntil > now) {
     const secs = Math.ceil((lockUntil - now) / 1000);
     document.getElementById('login-error').textContent = `Κλειδωμένο. Δοκιμάστε σε ${secs}δ.`;
     return;
   }
-
   const pass = document.getElementById('login-pass').value;
   if (!pass) return;
-
-  const hash = await sha256(pass);
-  const storedHash = localStorage.getItem('crm_pass_hash') || DEFAULT_HASH;
-
-  if (hash === storedHash) {
+  const storedPass = localStorage.getItem('crm_pass') || DEFAULT_PASS;
+  if (pass === storedPass) {
     failedAttempts = 0;
     localStorage.setItem('crm_session', Date.now().toString());
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('login-pass').value = '';
-    // Φόρτωσε την εφαρμογή
     loadFromServer().then(() => {
       renderDashboard();
       updateFab('dashboard');
@@ -876,12 +866,10 @@ async function doLogin() {
     if (failedAttempts >= 5) {
       lockUntil = Date.now() + 30000;
       document.getElementById('login-error').textContent = 'Πολλές αποτυχημένες προσπάθειες. Κλείδωμα 30δ.';
-      document.getElementById('login-attempts').textContent = '';
       setTimeout(() => { lockUntil = 0; failedAttempts = 0; document.getElementById('login-error').textContent = ''; }, 30000);
     } else {
       document.getElementById('login-error').textContent = 'Λάθος κωδικός. Δοκιμάστε ξανά.';
       document.getElementById('login-attempts').textContent = `Αποτυχημένες προσπάθειες: ${failedAttempts}/5`;
-      // Shake animation
       const input = document.getElementById('login-pass');
       input.style.borderColor = '#dc2626';
       setTimeout(() => input.style.borderColor = '', 1000);
@@ -889,12 +877,10 @@ async function doLogin() {
   }
 }
 
-async function changePassword(oldPass, newPass) {
-  const oldHash = await sha256(oldPass);
-  const storedHash = localStorage.getItem('crm_pass_hash') || DEFAULT_HASH;
-  if (oldHash !== storedHash) return false;
-  const newHash = await sha256(newPass);
-  localStorage.setItem('crm_pass_hash', newHash);
+function changePassword(oldPass, newPass) {
+  const storedPass = localStorage.getItem('crm_pass') || DEFAULT_PASS;
+  if (oldPass !== storedPass) return false;
+  localStorage.setItem('crm_pass', newPass);
   return true;
 }
 
@@ -1953,7 +1939,7 @@ window.showTab=function(tab,db,mb){_origShowTab(tab,db,mb);updateFab(tab);setTim
 const _origRR=window.renderReceipts;
 window.renderReceipts=function(){_origRR();renderMobileReceiptCards(getFilteredReceipts(),'receipts-cards');};
 
-async function submitChangePassword() {
+function submitChangePassword() {
   const oldPass = document.getElementById('set-old-pass').value;
   const newPass = document.getElementById('set-new-pass').value;
   const newPass2 = document.getElementById('set-new-pass2').value;
@@ -1961,7 +1947,7 @@ async function submitChangePassword() {
   if (!oldPass || !newPass || !newPass2) { msg.style.color='#dc2626'; msg.textContent='Συμπληρώστε όλα τα πεδία.'; return; }
   if (newPass !== newPass2) { msg.style.color='#dc2626'; msg.textContent='Οι νέοι κωδικοί δεν ταιριάζουν.'; return; }
   if (newPass.length < 4) { msg.style.color='#dc2626'; msg.textContent='Ο κωδικός πρέπει να έχει τουλάχιστον 4 χαρακτήρες.'; return; }
-  const ok = await changePassword(oldPass, newPass);
+  const ok = changePassword(oldPass, newPass);
   if (ok) {
     msg.style.color='#059669'; msg.textContent='✓ Ο κωδικός άλλαξε επιτυχώς!';
     ['set-old-pass','set-new-pass','set-new-pass2'].forEach(id => document.getElementById(id).value='');
