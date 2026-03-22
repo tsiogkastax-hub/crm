@@ -844,7 +844,7 @@ function getReceipts(){return load('receipts')}
 function getReminders(){return load('reminders')}
 function clientName(id){return getClients().find(c=>c.id===id)?.name||'Άγνωστος'}
 function serviceName(id){
-  const s=getServices().find(x=>x.id===id);
+  const s=getAllServices().find(x=>x.id===id);
   if(!s) return 'Άγνωστη';
   const period=s.periodValue?' — '+s.periodValue:'';
   const year=s.year?' '+s.year:'';
@@ -1205,15 +1205,21 @@ function editService(id){
 function renderServices(){
   const services=getServices();const body=document.getElementById('services-body');
   if(!services.length){body.innerHTML='<tr><td colspan="7" class="empty">Δεν υπάρχουν υπηρεσίες.</td></tr>';return;}
-  body.innerHTML=services.map(s=>`<tr>
-    <td>${clientName(s.clientId)}</td>
-    <td class="td-bold">${s.name}</td>
-    <td><span class="badge badge-blue">${PERIOD_LABELS[s.periodicity]||''}</span></td>
-    <td class="td-muted">${s.periodValue||''}</td>
-    <td class="td-muted">${s.year||''}</td>
-    <td class="td-mono td-bold">${fmt(s.price)}</td>
-    <td><button class="btn btn-sm btn-outline" onclick="editService('${s.id}')">✎</button> <button class="btn btn-sm btn-danger" onclick="deleteService('${s.id}')">Διαγραφή</button></td>
-  </tr>`).join('');
+  body.innerHTML=services.map(s=>{
+    const d=getServiceDebt(s.id);
+    const debtBadge=d.debt>0
+      ?'<span style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:1px 7px;border-radius:20px;font-size:10px;font-weight:600;margin-left:6px">Χρωστά: '+fmt(d.debt)+'</span>'
+      :'<span style="background:#ecfdf5;color:#059669;border:1px solid #bbf7d0;padding:1px 7px;border-radius:20px;font-size:10px;font-weight:500;margin-left:6px">✓</span>';
+    return '<tr>'
+      +'<td>'+clientName(s.clientId)+'</td>'
+      +'<td class="td-bold">'+s.name+(s.periodValue?' — <span style="font-weight:400;color:var(--t2)">'+s.periodValue+'</span>':'')+debtBadge+'</td>'
+      +'<td><span class="badge badge-blue">'+(PERIOD_LABELS[s.periodicity]||'')+'</span></td>'
+      +'<td class="td-muted">'+(s.periodValue||'')+'</td>'
+      +'<td class="td-muted">'+(s.year||'')+'</td>'
+      +'<td class="td-mono td-bold">'+fmt(s.price)+'</td>'
+      +'<td><button class="btn btn-sm btn-outline" onclick="editService(\''+s.id+'\')">✎</button> <button class="btn btn-sm btn-danger" onclick="deleteService(\''+s.id+'\')">Διαγραφή</button></td>'
+    +'</tr>';
+  }).join('');
 }
 function deleteService(id){
   confirm('Διαγραφή Υπηρεσίας','Θα διαγραφεί η υπηρεσία και όλες οι εισπράξεις της.',()=>{
