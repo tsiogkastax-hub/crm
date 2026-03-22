@@ -257,8 +257,9 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
   <div class="login-box">
     <div class="login-logo"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
     <div class="login-title">Λογιστικές Εισπράξεις</div>
-    <div class="login-sub">Εισάγετε τον κωδικό πρόσβασης</div>
-    <input class="login-input" id="login-pass" type="password" placeholder="••••" onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="login-sub">Συνδεθείτε για να συνεχίσετε</div>
+    <input class="login-input" id="login-user" type="text" placeholder="Όνομα χρήστη" style="letter-spacing:0;font-family:inherit;margin-bottom:8px" onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()">
+    <input class="login-input" id="login-pass" type="password" placeholder="Κωδικός" onkeydown="if(event.key==='Enter')doLogin()">
     <button class="login-btn" onclick="doLogin()">Είσοδος</button>
     <div class="login-error" id="login-error"></div>
   </div>
@@ -314,6 +315,10 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
     </button>
   </nav>
   <div class="sb-footer">
+    <div style="padding:8px 10px;margin-bottom:4px;border-radius:9px;background:var(--bg3)">
+      <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Συνδεδεμένος</div>
+      <div style="font-size:13px;font-weight:600;color:var(--t1)" id="current-user-display">—</div>
+    </div>
     <button class="theme-btn" onclick="toggleDark()">
       <svg id="theme-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
       <span id="theme-lbl">Σκοτεινό θέμα</span>
@@ -401,13 +406,18 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
       <option value="9">Οκτώβριος</option><option value="10">Νοέμβριος</option><option value="11">Δεκέμβριος</option>
     </select>
     <select class="form-input" id="f-client" onchange="renderReceipts()"><option value="">Όλοι οι πελάτες</option></select>
+    <select class="form-input" id="f-paymethod" onchange="renderReceipts()" style="width:auto;padding:7px 28px 7px 10px;font-size:12px">
+      <option value="">Όλοι οι τρόποι</option>
+      <option value="cash">💵 Ταμείο</option>
+      <option value="bank">🏦 Όψεως</option>
+    </select>
     <button class="btn btn-outline btn-sm" onclick="exportReceiptsExcel()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       Excel
     </button>
   </div>
   <div id="receipts-summary" style="margin-bottom:12px;font-size:12px;color:var(--t3)"></div>
-  <div class="card"><div class="table-wrap"><table><thead><tr><th>Ημερομηνία</th><th>Πελάτης</th><th>Υπηρεσία</th><th>Σημειώσεις</th><th>Ποσό</th><th></th></tr></thead><tbody id="receipts-body"></tbody></table></div></div>
+  <div class="card"><div class="table-wrap"><table><thead><tr><th>Ημερομηνία</th><th>Πελάτης</th><th>Υπηρεσία</th><th>Τρόπος</th><th>Καταχώρησε</th><th>Σημειώσεις</th><th>Ποσό</th><th></th></tr></thead><tbody id="receipts-body"></tbody></table></div></div>
 </div>
 
 <!-- REMINDERS -->
@@ -543,18 +553,25 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
 
 <!-- SETTINGS -->
 <div id="tab-settings" class="tab-page" style="display:none">
-  <div class="topbar"><div class="page-title"><h2>Ρυθμίσεις</h2><p>Κωδικός και προτιμήσεις</p></div></div>
-  <div class="card card-pad" style="max-width:420px;margin-bottom:14px">
-    <div class="section-title" style="margin-bottom:16px">🔒 Αλλαγή Κωδικού</div>
+  <div class="topbar"><div class="page-title"><h2>Ρυθμίσεις</h2><p>Χρήστες και κωδικοί</p></div></div>
+
+  <div class="card card-pad" style="max-width:500px;margin-bottom:14px">
+    <div class="section-title" style="margin-bottom:14px">👥 Διαχείριση Χρηστών</div>
+    <div id="users-list"></div>
+  </div>
+
+  <div class="card card-pad" style="max-width:500px;margin-bottom:14px">
+    <div class="section-title" style="margin-bottom:16px">🔒 Αλλαγή Δικού μου Κωδικού</div>
     <div class="form-group"><label class="form-label">Τρέχων Κωδικός</label><input class="form-input" id="set-old-pass" type="password" placeholder="••••••••"></div>
     <div class="form-group"><label class="form-label">Νέος Κωδικός</label><input class="form-input" id="set-new-pass" type="password" placeholder="••••••••"></div>
     <div class="form-group"><label class="form-label">Επιβεβαίωση</label><input class="form-input" id="set-new-pass2" type="password" placeholder="••••••••"></div>
     <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="submitChangePassword()">Αποθήκευση Κωδικού</button>
     <div id="pass-msg" style="margin-top:10px;font-size:13px;min-height:18px"></div>
   </div>
-  <div class="card card-pad" style="max-width:420px">
+
+  <div class="card card-pad" style="max-width:500px">
     <div class="section-title" style="margin-bottom:12px">🚪 Αποσύνδεση</div>
-    <p style="font-size:13px;color:var(--t2);margin-bottom:14px">Θα χρειαστεί κωδικός για επανείσοδο.</p>
+    <p style="font-size:13px;color:var(--t2);margin-bottom:14px">Αποσύνδεση από την τρέχουσα συνεδρία.</p>
     <button class="btn btn-danger" style="width:100%;justify-content:center" onclick="logout()">Αποσύνδεση</button>
   </div>
 </div>
@@ -663,6 +680,19 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
         <div class="form-group" style="margin:0"><label class="form-label">Ποσό (€) *</label><input class="form-input" id="r-amount" type="number" step="0.01" placeholder="0.00"></div>
         <div class="form-group" style="margin:0"><label class="form-label">Ημερομηνία *</label><input class="form-input" id="r-date" type="date"></div>
       </div>
+      <div class="form-group">
+        <label class="form-label">Τρόπος Πληρωμής</label>
+        <div style="display:flex;gap:8px">
+          <label style="flex:1;display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--inpb);border-radius:10px;cursor:pointer;background:var(--inp);transition:all .15s" id="pay-cash-label">
+            <input type="radio" name="r-paymethod" id="r-pay-cash" value="cash" checked style="accent-color:var(--acc)">
+            <span style="font-size:13px;font-weight:500;color:var(--t1)">💵 Ταμείο</span>
+          </label>
+          <label style="flex:1;display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--inpb);border-radius:10px;cursor:pointer;background:var(--inp);transition:all .15s" id="pay-bank-label">
+            <input type="radio" name="r-paymethod" id="r-pay-bank" value="bank" style="accent-color:var(--acc)">
+            <span style="font-size:13px;font-weight:500;color:var(--t1)">🏦 Όψεως</span>
+          </label>
+        </div>
+      </div>
       <div class="form-group"><label class="form-label">Σημειώσεις</label><textarea class="form-input" id="r-notes" placeholder="Προαιρετικές σημειώσεις..."></textarea></div>
     </div>
     <div style="margin-top:20px;display:flex;gap:8px">
@@ -686,6 +716,25 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
     <div style="margin-top:20px;display:flex;gap:8px">
       <button class="btn btn-outline" style="flex:1;justify-content:center" onclick="closeModal('modal-reminder')">Ακύρωση</button>
       <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="saveReminder()">Αποθήκευση</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT USER MODAL -->
+<div class="modal-overlay" id="modal-edit-user">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-header">
+      <span class="modal-title">Επεξεργασία Χρήστη</span>
+      <button class="icon-btn" onclick="closeModal('modal-edit-user')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <input type="hidden" id="eu-idx">
+    <div class="form-group"><label class="form-label">Εμφανιζόμενο Όνομα</label><input class="form-input" id="eu-display" placeholder="π.χ. Γιώργης"></div>
+    <div class="form-group"><label class="form-label">Username</label><input class="form-input" id="eu-username" placeholder="π.χ. giorgis"></div>
+    <div class="form-group"><label class="form-label">Νέος Κωδικός <span style="color:var(--t3);font-weight:400">(αφήστε κενό για να μην αλλάξει)</span></label><input class="form-input" id="eu-pass" type="password" placeholder="••••••••"></div>
+    <div id="eu-msg" style="font-size:13px;min-height:18px;margin-bottom:8px"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-outline" style="flex:1;justify-content:center" onclick="closeModal('modal-edit-user')">Ακύρωση</button>
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="saveUserEdit()">Αποθήκευση</button>
     </div>
   </div>
 </div>
@@ -831,6 +880,7 @@ function renderPage(tab){
   if(tab==='reminders') renderReminders();
   if(tab==='debts') renderDebts();
   if(tab==='reports') populateReportFilters();
+  if(tab==='settings') renderUsersSettings();
 }
 
 // ===== MODAL =====
@@ -1187,6 +1237,7 @@ function prepReceiptModal(){
   document.getElementById('r-amount').value='';
   document.getElementById('r-date').value=today();
   document.getElementById('r-notes').value='';
+  document.getElementById('r-pay-cash').checked=true;
 }
 function onReceiptClientChange(){
   const clientId=document.getElementById('r-cli').value;
@@ -1209,13 +1260,15 @@ function saveReceipt(){
   const date=document.getElementById('r-date').value;
   if(!clientId||!serviceId||isNaN(amount)||!date){toast('Συμπληρώστε τα υποχρεωτικά πεδία','error');return;}
   const editId=document.getElementById('r-edit-id').value;
+  const payMethod=document.querySelector('input[name="r-paymethod"]:checked')?.value||'cash';
+  const notes=document.getElementById('r-notes').value.trim();
   const receipts=getReceipts();
   if(editId){
     const i=receipts.findIndex(r=>r.id===editId);
-    if(i>-1) receipts[i]={...receipts[i],clientId,serviceId,amount,date,notes:document.getElementById('r-notes').value.trim()};
+    if(i>-1) receipts[i]={...receipts[i],clientId,serviceId,amount,date,notes,payMethod};
     save('receipts',receipts);toast('Η είσπραξη ενημερώθηκε!');
   } else {
-    receipts.unshift({id:uid(),clientId,serviceId,amount,date,notes:document.getElementById('r-notes').value.trim(),createdAt:new Date().toISOString()});
+    receipts.unshift({id:uid(),clientId,serviceId,amount,date,notes,payMethod,createdBy:getCurrentUsername(),createdAt:new Date().toISOString()});
     save('receipts',receipts);toast('Η είσπραξη αποθηκεύτηκε!');
   }
   closeModal('modal-receipt');
@@ -1248,6 +1301,8 @@ function editReceipt(id){
       document.getElementById('r-amount').value=r.amount;
       document.getElementById('r-date').value=r.date;
       document.getElementById('r-notes').value=r.notes||'';
+      if(r.payMethod==='bank'){document.getElementById('r-pay-bank').checked=true;}
+      else{document.getElementById('r-pay-cash').checked=true;}
     },50);
     document.querySelector('#modal-receipt .modal-title').textContent='Επεξεργασία Είσπραξης';
   },50);
@@ -1257,11 +1312,13 @@ function getFilteredReceipts(){
   const y=document.getElementById('f-year')?.value;
   const m=document.getElementById('f-month')?.value;
   const c=document.getElementById('f-client')?.value;
+  const pm=document.getElementById('f-paymethod')?.value;
   return getReceipts().filter(r=>{
     const d=new Date(r.date);
     if(y&&d.getFullYear()!==parseInt(y)) return false;
     if(m!==''&&m!==undefined&&m!==null&&d.getMonth()!==parseInt(m)) return false;
     if(c&&r.clientId!==c) return false;
+    if(pm&&(r.payMethod||'cash')!==pm) return false;
     return true;
   });
 }
@@ -1278,15 +1335,22 @@ function renderReceipts(){
   const total=recs.reduce((s,r)=>s+r.amount,0);
   document.getElementById('receipts-summary').textContent=recs.length+' εγγραφές · Σύνολο: '+fmt(total);
   const body=document.getElementById('receipts-body');
-  if(!recs.length){body.innerHTML='<tr><td colspan="6" class="empty">Δεν βρέθηκαν εισπράξεις.</td></tr>';return;}
-  body.innerHTML=recs.map(r=>`<tr>
-    <td class="td-mono">${fmtDate(r.date)}</td>
-    <td class="td-bold">${clientName(r.clientId)}</td>
-    <td>${serviceName(r.serviceId)}</td>
-    <td class="td-muted">${r.notes||'—'}</td>
-    <td class="td-mono td-bold">${fmt(r.amount)}</td>
-    <td><button class="btn btn-sm btn-outline" onclick="editReceipt('${r.id}')">✎</button> <button class="btn btn-sm btn-danger" onclick="deleteReceipt('${r.id}')">✕</button></td>
-  </tr>`).join('');
+  if(!recs.length){body.innerHTML='<tr><td colspan="7" class="empty">Δεν βρέθηκαν εισπράξεις.</td></tr>';return;}
+  body.innerHTML=recs.map(function(r){
+    var pm=r.payMethod==='bank'
+      ?'<span style="background:#eff6ff;color:#2563eb;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600">🏦 Όψεως</span>'
+      :'<span style="background:#ecfdf5;color:#059669;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600">💵 Ταμείο</span>';
+    return '<tr>'+
+      '<td class="td-mono">'+fmtDate(r.date)+'</td>'+
+      '<td class="td-bold">'+clientName(r.clientId)+'</td>'+
+      '<td>'+serviceName(r.serviceId)+'</td>'+
+      '<td>'+pm+'</td>'+
+      '<td class="td-muted" style="font-size:11px">'+(r.createdBy||'—')+'</td>'+
+      '<td class="td-muted">'+( r.notes||'—')+'</td>'+
+      '<td class="td-mono td-bold">'+fmt(r.amount)+'</td>'+
+      '<td><button class="btn btn-sm btn-outline" onclick="editReceipt(\''+r.id+'\')">✎</button> <button class="btn btn-sm btn-danger" onclick="deleteReceipt(\''+r.id+'\')">✕</button></td>'+
+    '</tr>';
+  }).join('');
 }
 function deleteReceipt(id){
   confirm('Διαγραφή Είσπραξης','Η είσπραξη θα διαγραφεί οριστικά.',()=>{
@@ -1389,10 +1453,17 @@ function renderDashboard(){
   const now=new Date();const m=now.getMonth();const y=now.getFullYear();
   const monthly=receipts.filter(function(r){const d=new Date(r.date);return d.getMonth()===m&&d.getFullYear()===y;}).reduce(function(s,r){return s+parseFloat(r.amount||0);},0);
   const yearForecast=allSvcs.filter(function(sv){return String(sv.year)==String(y);}).reduce(function(s,sv){return s+parseFloat(sv.price||0);},0);
-  // Αναμενόμενες = ενεργές υπηρεσίες με υπόλοιπο
   const pendingExp=services.reduce(function(s,sv){return s+getServiceDebt(sv.id).debt;},0);
   const totalDebt=getTotalDebt();
   const forecastPct=yearForecast>0?Math.min(100,Math.round(total/yearForecast*100)):0;
+
+  // Cash vs Bank
+  const cashTotal=receipts.filter(function(r){return (r.payMethod||'cash')==='cash';}).reduce(function(s,r){return s+parseFloat(r.amount||0);},0);
+  const bankTotal=receipts.filter(function(r){return r.payMethod==='bank';}).reduce(function(s,r){return s+parseFloat(r.amount||0);},0);
+  const cashMonth=receipts.filter(function(r){const d=new Date(r.date);return d.getMonth()===m&&d.getFullYear()===y&&(r.payMethod||'cash')==='cash';}).reduce(function(s,r){return s+parseFloat(r.amount||0);},0);
+  const bankMonth=receipts.filter(function(r){const d=new Date(r.date);return d.getMonth()===m&&d.getFullYear()===y&&r.payMethod==='bank';}).reduce(function(s,r){return s+parseFloat(r.amount||0);},0);
+  const cashPct=total>0?Math.round(cashTotal/total*100):0;
+  const bankPct=total>0?Math.round(bankTotal/total*100):0;
 
   document.getElementById('stats-grid').innerHTML=`
     <div class="stat-card"><div class="stat-ico" style="background:#ecfdf5"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div><div class="stat-lbl">Συνολικές Εισπράξεις</div><div class="stat-val">${fmt(total)}</div></div></div>
@@ -1400,11 +1471,11 @@ function renderDashboard(){
     <div class="stat-card"><div class="stat-ico" style="background:#f5f3ff"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div><div><div class="stat-lbl">Αναμενόμενες Εισπράξεις</div><div class="stat-val">${fmt(pendingExp)}</div></div></div>
     <div class="stat-card" style="cursor:pointer" onclick="showTab('debts')"><div class="stat-ico" style="background:#fef2f2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div><div class="stat-lbl">Συνολικές Οφειλές</div><div class="stat-val" style="color:${totalDebt>0?'#dc2626':'#059669'}">${fmt(totalDebt)}</div></div></div>`;
 
-  // Forecast progress bar
+  // Forecast progress bar + Cash/Bank cards
   const fbar=document.getElementById('forecast-bar-section');
   if(fbar){
     fbar.innerHTML=`
-    <div class="card card-pad" style="margin-bottom:24px">
+    <div class="card card-pad" style="margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <div>
           <span class="card-title">Ετήσιο Forecast ${y}</span>
@@ -1420,13 +1491,48 @@ function renderDashboard(){
         <span>Απομένουν: <b style="color:var(--t1)">${fmt(Math.max(0,yearForecast-total))}</b></span>
         <span>Στόχος: <b style="color:var(--t1)">${fmt(yearForecast)}</b></span>
       </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px">
+      <div class="card card-pad" style="cursor:pointer" onclick="document.getElementById('f-paymethod').value='cash';showTab('receipts')">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:44px;height:44px;border-radius:12px;background:#ecfdf5;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
+            </div>
+            <div><div class="stat-lbl">Ταμείο</div><div style="font-size:20px;font-weight:700;color:var(--t1)">${fmt(cashTotal)}</div></div>
+          </div>
+          <div style="text-align:right"><div style="font-size:24px;font-weight:700;color:#059669">${cashPct}%</div><div style="font-size:10px;color:var(--t3)">επί συνόλου</div></div>
+        </div>
+        <div style="background:var(--bg3);border-radius:99px;height:6px;overflow:hidden;margin-bottom:6px">
+          <div style="height:100%;border-radius:99px;width:${cashPct}%;background:linear-gradient(90deg,#059669,#34d399)"></div>
+        </div>
+        <div style="font-size:11px;color:var(--t3)">Τρέχων μήνας: <b style="color:var(--t1)">${fmt(cashMonth)}</b></div>
+      </div>
+      <div class="card card-pad" style="cursor:pointer" onclick="document.getElementById('f-paymethod').value='bank';showTab('receipts')">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:44px;height:44px;border-radius:12px;background:#eff6ff;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </div>
+            <div><div class="stat-lbl">Όψεως</div><div style="font-size:20px;font-weight:700;color:var(--t1)">${fmt(bankTotal)}</div></div>
+          </div>
+          <div style="text-align:right"><div style="font-size:24px;font-weight:700;color:#2563eb">${bankPct}%</div><div style="font-size:10px;color:var(--t3)">επί συνόλου</div></div>
+        </div>
+        <div style="background:var(--bg3);border-radius:99px;height:6px;overflow:hidden;margin-bottom:6px">
+          <div style="height:100%;border-radius:99px;width:${bankPct}%;background:linear-gradient(90deg,#2563eb,#60a5fa)"></div>
+        </div>
+        <div style="font-size:11px;color:var(--t3)">Τρέχων μήνας: <b style="color:var(--t1)">${fmt(bankMonth)}</b></div>
+      </div>
     </div>`;
   }
 
   // Recent receipts
   const recent=receipts.slice(0,6);
   const rb=document.getElementById('recent-receipts-body');
-  rb.innerHTML=recent.length?recent.map(r=>`<tr><td class="td-mono">${fmtDate(r.date)}</td><td class="td-bold">${clientName(r.clientId)}</td><td>${serviceName(r.serviceId)}</td><td class="td-muted">${r.notes||'—'}</td><td class="td-mono td-bold">${fmt(r.amount)}</td></tr>`).join(''):'<tr><td colspan="5" class="empty">Δεν υπάρχουν εισπράξεις ακόμα.</td></tr>';
+  rb.innerHTML=recent.length?recent.map(r=>{
+    var pm=r.payMethod==='bank'?'<span style="background:#eff6ff;color:#2563eb;padding:1px 6px;border-radius:10px;font-size:10px;font-weight:600">🏦</span>':'<span style="background:#ecfdf5;color:#059669;padding:1px 6px;border-radius:10px;font-size:10px;font-weight:600">💵</span>';
+    return '<tr><td class="td-mono">'+fmtDate(r.date)+'</td><td class="td-bold">'+clientName(r.clientId)+'</td><td>'+serviceName(r.serviceId)+'</td><td class="td-muted">'+pm+' '+(r.notes||'—')+'</td><td class="td-mono td-bold">'+fmt(r.amount)+'</td></tr>';
+  }).join(''):'<tr><td colspan="5" class="empty">Δεν υπάρχουν εισπράξεις ακόμα.</td></tr>';
 
   updateCharts();
 }
@@ -1566,33 +1672,54 @@ function importBackup(input){
 
 // ===== LOGIN =====
 function doLogin(){
+  const username=document.getElementById('login-user').value.trim();
   const pass=document.getElementById('login-pass').value;
-  if(!pass) return;
-  const stored=localStorage.getItem('crm_pass')||'123';
-  if(pass===stored){
-    localStorage.setItem('crm_session',Date.now().toString());
+  if(!username||!pass) return;
+  const users=getUsers();
+  const user=users.find(function(u){return u.username===username&&u.password===pass;});
+  if(user){
+    currentUser=user;
+    localStorage.setItem('crm_session',JSON.stringify({user:user,ts:Date.now()}));
     document.getElementById('login-screen').style.display='none';
+    document.getElementById('login-user').value='';
     document.getElementById('login-pass').value='';
-    loadFromServer().then(()=>{renderDashboard();});
+    updateUserDisplay();
+    loadFromServer().then(function(){renderDashboard();});
     if(localStorage.getItem('gscript_url')) setTimeout(loadFromSheets,500);
     else setTimeout(openScriptSetup,800);
   } else {
-    document.getElementById('login-error').textContent='Λάθος κωδικός';
+    document.getElementById('login-error').textContent='Λάθος όνομα χρήστη ή κωδικός';
     document.getElementById('login-pass').value='';
-    setTimeout(()=>document.getElementById('login-error').textContent='',2000);
+    setTimeout(function(){document.getElementById('login-error').textContent='';},2500);
   }
 }
 function checkSession(){
   const s=localStorage.getItem('crm_session');
-  if(s && Date.now()-parseInt(s)<8*60*60*1000){
-    document.getElementById('login-screen').style.display='none';
-    return true;
-  }
+  if(s){try{
+    const data=JSON.parse(s);
+    if(Date.now()-data.ts<8*60*60*1000){
+      currentUser=data.user;
+      document.getElementById('login-screen').style.display='none';
+      updateUserDisplay();
+      return true;
+    }
+  }catch(e){}}
   return false;
 }
+function updateUserDisplay(){
+  const el=document.getElementById('current-user-display');
+  if(el&&currentUser) el.textContent=currentUser.displayName||currentUser.username;
+}
+function logout(){localStorage.removeItem('crm_session');currentUser=null;location.reload();}
+function getCurrentUsername(){return currentUser?(currentUser.displayName||currentUser.username):'Άγνωστος';}
 function changePassword(oldP,newP){
-  if(oldP!==(localStorage.getItem('crm_pass')||'123')) return false;
-  localStorage.setItem('crm_pass',newP); return true;
+  const users=getUsers();
+  const idx=users.findIndex(function(u){return u.username===(currentUser&&currentUser.username);});
+  if(idx<0||users[idx].password!==oldP) return false;
+  users[idx].password=newP;saveUsers(users);
+  currentUser=users[idx];
+  localStorage.setItem('crm_session',JSON.stringify({user:currentUser,ts:Date.now()}));
+  return true;
 }
 function submitChangePassword(){
   const o=document.getElementById('set-old-pass').value;
@@ -1602,10 +1729,52 @@ function submitChangePassword(){
   if(!o||!n||!n2){msg.style.color='#dc2626';msg.textContent='Συμπληρώστε όλα τα πεδία.';return;}
   if(n!==n2){msg.style.color='#dc2626';msg.textContent='Οι νέοι κωδικοί δεν ταιριάζουν.';return;}
   if(n.length<3){msg.style.color='#dc2626';msg.textContent='Τουλάχιστον 3 χαρακτήρες.';return;}
-  if(changePassword(o,n)){msg.style.color='#059669';msg.textContent='✓ Ο κωδικός άλλαξε!';['set-old-pass','set-new-pass','set-new-pass2'].forEach(id=>document.getElementById(id).value='');}
+  if(changePassword(o,n)){msg.style.color='#059669';msg.textContent='✓ Ο κωδικός άλλαξε!';['set-old-pass','set-new-pass','set-new-pass2'].forEach(function(id){document.getElementById(id).value='';});}
   else{msg.style.color='#dc2626';msg.textContent='Λάθος τρέχων κωδικός.';}
 }
-function logout(){localStorage.removeItem('crm_session');location.reload();}
+// User management
+function getUsers(){var s=localStorage.getItem('crm_users');return s?JSON.parse(s):[{username:'admin',password:'123',displayName:'Διαχειριστής',role:'admin'},{username:'user2',password:'456',displayName:'Συνάδελφος',role:'user'}];}
+function saveUsers(u){localStorage.setItem('crm_users',JSON.stringify(u));}
+function renderUsersSettings(){
+  const el=document.getElementById('users-list');if(!el) return;
+  const users=getUsers();
+  el.innerHTML=users.map(function(u,i){
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--bd)">'
+      +'<div><div style="font-size:13px;font-weight:600;color:var(--t1)">'+u.displayName+' <span style="font-weight:400;color:var(--t3)">(@'+u.username+')</span></div>'
+      +'<div style="font-size:11px;margin-top:2px">'+(u.role==='admin'?'<span style="background:#f5f3ff;color:#7c3aed;padding:1px 7px;border-radius:20px;font-size:10px;font-weight:600">Admin</span>':'<span style="background:var(--bg3);color:var(--t2);padding:1px 7px;border-radius:20px;font-size:10px">Χρήστης</span>')+'</div></div>'
+      +'<button class="btn btn-sm btn-outline" onclick="editUserModal('+i+')">✎ Επεξεργασία</button>'
+    +'</div>';
+  }).join('');
+}
+function editUserModal(idx){
+  const u=getUsers()[idx];
+  document.getElementById('eu-idx').value=idx;
+  document.getElementById('eu-display').value=u.displayName||'';
+  document.getElementById('eu-username').value=u.username;
+  document.getElementById('eu-pass').value='';
+  document.getElementById('eu-msg').textContent='';
+  openModal('modal-edit-user');
+}
+function saveUserEdit(){
+  const idx=parseInt(document.getElementById('eu-idx').value);
+  const display=document.getElementById('eu-display').value.trim();
+  const username=document.getElementById('eu-username').value.trim();
+  const pass=document.getElementById('eu-pass').value;
+  const msg=document.getElementById('eu-msg');
+  if(!display||!username){msg.style.color='#dc2626';msg.textContent='Συμπληρώστε όλα τα πεδία.';return;}
+  if(pass.length>0&&pass.length<3){msg.style.color='#dc2626';msg.textContent='Κωδικός: τουλάχιστον 3 χαρακτήρες.';return;}
+  const users=getUsers();
+  users[idx].displayName=display;users[idx].username=username;
+  if(pass.length>=3) users[idx].password=pass;
+  saveUsers(users);
+  if(currentUser&&currentUser.username===users[idx].username){
+    currentUser=users[idx];
+    localStorage.setItem('crm_session',JSON.stringify({user:currentUser,ts:Date.now()}));
+    updateUserDisplay();
+  }
+  closeModal('modal-edit-user');renderUsersSettings();toast('Ο χρήστης ενημερώθηκε!','success');
+}
+var currentUser=null;
 
 // ===== GOOGLE SHEETS SYNC =====
 function injectSyncBar(){
