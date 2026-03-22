@@ -87,7 +87,7 @@ nav{flex:1;display:flex;flex-direction:column;gap:1px}
 .icon-btn:hover{background:var(--bg3);color:var(--t1)}
 
 /* Stats */
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
 .stat-card{background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:18px;display:flex;align-items:flex-start;gap:14px;box-shadow:var(--shadow);transition:background .25s,border-color .25s}
 .stat-ico{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .stat-lbl{font-size:11px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
@@ -296,6 +296,10 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
       <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
       Υπενθυμίσεις
     </button>
+    <button class="nav-btn" onclick="showTab('debts',this)">
+      <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Οφειλές
+    </button>
     <button class="nav-btn" onclick="showTab('reports',this)">
       <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
       Αναφορές
@@ -336,6 +340,7 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
     </div>
   </div>
   <div class="stats-grid" id="stats-grid"></div>
+  <div id="forecast-bar-section" style="margin-bottom:0"></div>
   <div style="display:grid;grid-template-columns:1fr 320px;gap:16px;margin-bottom:24px" id="chart-section">
     <div class="card card-pad">
       <div class="section-head"><span class="card-title">Εισπράξεις ανά Μήνα</span></div>
@@ -417,6 +422,15 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
     </div>
   </div>
   <div class="card card-pad" id="reminders-list"></div>
+</div>
+
+<!-- DEBTS -->
+<div id="tab-debts" class="tab-page" style="display:none">
+  <div class="topbar">
+    <div class="page-title"><h2>Οφειλές</h2><p>Εκκρεμείς πληρωμές ανά πελάτη</p></div>
+  </div>
+  <div id="debts-summary"></div>
+  <div id="debts-list"></div>
 </div>
 
 <!-- REPORTS -->
@@ -676,6 +690,17 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
   </div>
 </div>
 
+<!-- CLIENT HISTORY MODAL -->
+<div class="modal-overlay" id="modal-history">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <span class="modal-title" id="history-title">Ιστορικό Πελάτη</span>
+      <button class="icon-btn" onclick="closeModal('modal-history')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div id="history-body" style="max-height:60vh;overflow-y:auto"></div>
+  </div>
+</div>
+
 <!-- CONFIRM MODAL -->
 <div class="modal-overlay" id="modal-confirm">
   <div class="modal" style="max-width:380px">
@@ -764,7 +789,8 @@ function load(k){ return _db[k] || []; }
 function save(k, d){ _db[k] = d; persistData(); }
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2)}
 function getClients(){return load('clients')}
-function getServices(){return load('services')}
+function getServices(){return load('services').filter(function(s){return !s.archived;});}
+function getAllServices(){return load('services');}
 function getReceipts(){return load('receipts')}
 function getReminders(){return load('reminders')}
 function clientName(id){return getClients().find(c=>c.id===id)?.name||'Άγνωστος'}
@@ -803,6 +829,7 @@ function renderPage(tab){
   if(tab==='services') renderServices();
   if(tab==='receipts') renderReceipts();
   if(tab==='reminders') renderReminders();
+  if(tab==='debts') renderDebts();
   if(tab==='reports') populateReportFilters();
 }
 
@@ -859,43 +886,207 @@ function editClient(id){
   openModal('modal-client');
 }
 
-function renderClients(){
-  const clients=getClients();const services=getServices();
-  const el=document.getElementById('clients-list');
-  if(!clients.length){el.innerHTML='<div class="empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><p>Δεν υπάρχουν πελάτες. Προσθέστε τον πρώτο!</p></div>';return;}
-  el.innerHTML=clients.map(c=>{
-    const svcs=services.filter(s=>s.clientId===c.id);
-    const initials=c.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-    return`<div class="client-card">
-      <div class="client-card-header" onclick="toggleClientBody('cb-${c.id}')">
-        <div class="client-info">
-          <div class="avatar">${initials}</div>
-          <div>
-            <div class="client-name">${c.name}</div>
-            <div class="client-meta">ΑΦΜ: ${c.afm}${c.phone?' · '+c.phone:''}${c.email?' · '+c.email:''}</div>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-          <span class="badge badge-gray">${svcs.length} υπηρεσίες</span>
-          <button class="btn btn-sm btn-outline" onclick="event.stopPropagation();editClient('${c.id}')">✎ Επεξεργασία</button>
-          <button class="btn btn-sm btn-outline" onclick="event.stopPropagation();openServiceModal('${c.id}')">+ Υπηρεσία</button>
-          <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteClient('${c.id}')">Διαγραφή</button>
-        </div>
-      </div>
-      <div id="cb-${c.id}" class="client-body" style="display:none">
-        ${svcs.length?svcs.map(s=>`<div class="svc-row">
-          <div><div class="svc-name">${s.name}</div><div class="svc-meta">${PERIOD_LABELS[s.periodicity]||''} · ${s.periodValue||''} ${s.year||''}</div></div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span class="svc-price">${fmt(s.price)}</span>
-            <button class="btn btn-sm btn-outline" onclick="editService('${s.id}')">✎</button>
-            <button class="btn btn-sm btn-danger" onclick="deleteService('${s.id}')">✕</button>
-          </div>
-        </div>`).join(''):'<div style="padding:16px 0;color:var(--t3);font-size:13px">Δεν υπάρχουν υπηρεσίες.</div>'}
-      </div>
-    </div>`;
+function renderDebts(){
+  var clients=getClients(),services=getServices();
+  var el=document.getElementById('debts-list');if(!el) return;
+  var debtors=clients.map(function(c){
+    var ds=services.filter(function(s){
+      if(s.clientId!==c.id) return false;
+      var d=getServiceDebt(s.id);
+      if(d.debt<=0) return false;
+      // Show if: period expired OR partial payment exists
+      return d.expired || d.paid>0;
+    });
+    var td=ds.reduce(function(sum,s){return sum+getServiceDebt(s.id).debt;},0);
+    return {client:c,services:ds,totalDebt:td};
+  }).filter(function(x){return x.totalDebt>0;}).sort(function(a,b){return b.totalDebt-a.totalDebt;});
+  var totalAllDebt=debtors.reduce(function(s,x){return s+x.totalDebt;},0);
+  var expiredCount=0;
+  debtors.forEach(function(x){x.services.forEach(function(s){if(getServiceDebt(s.id).expired)expiredCount++;});});
+  document.getElementById('debts-summary').innerHTML=
+    '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:20px">'+
+    '<div class="stat-card"><div class="stat-ico" style="background:#fef2f2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div><div class="stat-lbl">Συνολικές Οφειλές</div><div class="stat-val" style="color:#dc2626">'+fmt(totalAllDebt)+'</div></div></div>'+
+    '<div class="stat-card"><div class="stat-ico" style="background:#fff7ed"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div><div class="stat-lbl">Πελάτες με Οφειλές</div><div class="stat-val" style="color:#ea580c">'+debtors.length+'</div></div></div>'+
+    '<div class="stat-card"><div class="stat-ico" style="background:#fef2f2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="stat-lbl">Ληγμένες Περίοδοι</div><div class="stat-val" style="color:#dc2626">'+expiredCount+'</div></div></div>'+
+    '</div>';
+  if(!debtors.length){el.innerHTML='<div class="empty"><p>Δεν υπάρχουν εκκρεμείς οφειλές!</p></div>';return;}
+  el.innerHTML=debtors.map(function(x){
+    var c=x.client;
+    var initials=c.name.split(' ').map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,2);
+    var rows=x.services.map(function(s){
+      var d=getServiceDebt(s.id);if(d.debt<=0) return '';
+      var badge=d.paid===0&&d.expired
+        ?'<span style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600">⏰ Ληγμένη</span>'
+        :d.paid===0
+          ?'<span style="background:#fffbeb;color:#d97706;border:1px solid #fcd34d;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600">○ Αναμενόμενη</span>'
+          :'<span style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600">◑ Μερική</span>';
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--bd);gap:8px">'+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px">'+
+            '<span style="font-size:13px;font-weight:500;color:var(--t1)">'+s.name+(s.periodValue?' — '+s.periodValue:'')+(s.year?' '+s.year:'')+'</span>'+badge+
+          '</div>'+
+          '<div style="font-size:11px;color:var(--t3)">Τιμή: '+fmt(d.price)+(d.paid>0?' · Πληρωμένο: '+fmt(d.paid):'')+(d.expired?' · <span style=\"color:#dc2626\">Η περίοδος έληξε</span>':'')+'</div>'+
+        '</div>'+
+        '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">'+
+          '<span style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:700">'+fmt(d.debt)+'</span>'+
+          '<button class="btn btn-sm btn-primary" onclick="quickReceipt(\\\'' + c.id + '\\\',\\\'' + s.id + '\\\',' + d.debt + ')">Είσπραξη</button>'+
+        '</div>'+
+      '</div>';
+    }).filter(function(r){return r!=='';}).join('');
+    return '<div class="client-card" style="margin-bottom:14px">'+
+      '<div style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--bd)">'+
+        '<div style="display:flex;align-items:center;gap:12px">'+
+          '<div class="avatar">'+initials+'</div>'+
+          '<div><div class="client-name">'+c.name+'</div><div class="client-meta">ΑΦΜ: '+c.afm+(c.phone?' · '+c.phone:'')+'</div></div>'+
+        '</div>'+
+        '<div style="text-align:right">'+
+          '<div style="font-size:11px;color:var(--t3);font-weight:500;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">Σύνολο Οφειλής</div>'+
+          '<div style="font-size:20px;font-weight:700;color:#dc2626">'+fmt(x.totalDebt)+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="padding:0 20px 6px">'+rows+'</div>'+
+    '</div>';
   }).join('');
 }
 
+// Quick receipt from debts page
+function quickReceipt(clientId, serviceId, debtAmount){
+  prepReceiptModal();
+  setTimeout(function(){
+    document.getElementById('r-cli').value=clientId;
+    onReceiptClientChange();
+    setTimeout(function(){
+      document.getElementById('r-svc').value=serviceId;
+      document.getElementById('r-amount').value=debtAmount.toFixed(2);
+      document.getElementById('r-date').value=today();
+    },50);
+    document.querySelector('#modal-receipt .modal-title').textContent='Είσπραξη Οφειλής';
+  },50);
+  openModal('modal-receipt');
+}
+function showClientHistory(clientId){
+  var c=getClients().find(function(x){return x.id===clientId;});
+  if(!c) return;
+  document.getElementById('history-title').textContent='Ιστορικό: '+c.name;
+  var allSvcs=getAllServices().filter(function(s){return s.clientId===clientId;});
+  var receipts=getReceipts().filter(function(r){return r.clientId===clientId;}).sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+  var totalPaid=receipts.reduce(function(s,r){return s+parseFloat(r.amount||0);},0);
+  var totalDebt=allSvcs.reduce(function(s,sv){
+    var d=getServiceDebt(sv.id); return s+d.debt;
+  },0);
+
+  var html='';
+  // Summary
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px">';
+  html+='<div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center"><div style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Υπηρεσίες</div><div style="font-size:18px;font-weight:700;color:var(--t1)">'+allSvcs.length+'</div></div>';
+  html+='<div style="background:#ecfdf5;border-radius:10px;padding:12px;text-align:center"><div style="font-size:10px;font-weight:600;color:#059669;text-transform:uppercase;margin-bottom:4px">Πληρωμένα</div><div style="font-size:18px;font-weight:700;color:#059669">'+fmt(totalPaid)+'</div></div>';
+  html+='<div style="background:'+(totalDebt>0?'#fef2f2':'#ecfdf5')+'";border-radius:10px;padding:12px;text-align:center><div style="font-size:10px;font-weight:600;color:'+(totalDebt>0?'#dc2626':'#059669')+';text-transform:uppercase;margin-bottom:4px">Οφειλές</div><div style="font-size:18px;font-weight:700;color:'+(totalDebt>0?'#dc2626':'#059669')+'">'+fmt(totalDebt)+'</div></div>';
+  html+='</div>';
+
+  // Services summary
+  if(allSvcs.length){
+    html+='<div style="font-size:12px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Υπηρεσίες</div>';
+    allSvcs.forEach(function(s){
+      var d=getServiceDebt(s.id);
+      var statusBadge=s.archived||d.debt<=0
+        ?'<span style="background:#ecfdf5;color:#059669;border:1px solid #bbf7d0;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600">✓ Εξοφλήθηκε</span>'
+        :d.paid>0
+          ?'<span style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600">◑ Μερική (χρωστά: '+fmt(d.debt)+')</span>'
+          :'<span style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600">✕ Ανεξόφλητη</span>';
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--bd)">';
+      html+='<div><div style="font-size:13px;font-weight:500;color:var(--t1)">'+s.name+(s.periodValue?' — '+s.periodValue:'')+(s.year?' '+s.year:'')+'</div></div>';
+      html+='<div style="display:flex;align-items:center;gap:8px">'+statusBadge+'<span style="font-size:13px;font-weight:700;color:var(--t1)">'+fmt(d.price)+'</span></div>';
+      html+='</div>';
+    });
+    html+='<div style="margin-top:4px"></div>';
+  }
+
+  // Receipts
+  if(receipts.length){
+    html+='<div style="font-size:12px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;margin:14px 0 8px">Εισπράξεις ('+receipts.length+')</div>';
+    receipts.forEach(function(r){
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--bd)">';
+      html+='<div><div style="font-size:13px;font-weight:500;color:var(--t1)">'+serviceName(r.serviceId)+'</div>';
+      html+='<div style="font-size:11px;color:var(--t3)">'+fmtDate(r.date)+(r.notes?' · '+r.notes:'')+'</div></div>';
+      html+='<span style="font-size:13px;font-weight:700;color:#059669">+'+fmt(parseFloat(r.amount||0))+'</span>';
+      html+='</div>';
+    });
+  } else {
+    html+='<div style="padding:20px 0;text-align:center;color:var(--t3);font-size:13px">Δεν υπάρχουν εισπράξεις.</div>';
+  }
+
+  document.getElementById('history-body').innerHTML=html;
+  openModal('modal-history');
+}
+function renderClients(){
+  var clients=getClients();var services=getServices();
+  var el=document.getElementById('clients-list');
+  if(!clients.length){el.innerHTML='<div class="empty"><p>Δεν υπάρχουν πελάτες. Προσθέστε τον πρώτο!</p></div>';return;}
+  var html='';
+  clients.forEach(function(c){
+    var svcs=services.filter(function(s){return s.clientId===c.id;});
+    var initials=c.name.split(' ').map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,2);
+    // Only show debt label for expired or partial (not future)
+    var clientExpiredDebt=getAllServices().filter(function(s){return s.clientId===c.id;}).reduce(function(sum,s){
+      var d=getServiceDebt(s.id);
+      if(d.debt<=0) return sum;
+      if(d.expired||d.paid>0) return sum+d.debt;
+      return sum;
+    },0);
+    var debtLabel=clientExpiredDebt>0?' <span style="background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600">Χρωστά: '+fmt(clientExpiredDebt)+'</span>':'';
+
+    // Include archived services too
+    var allClientSvcs=getAllServices().filter(function(s){return s.clientId===c.id;});
+    var svcRows='';
+    if(allClientSvcs.length){
+      allClientSvcs.forEach(function(s){
+        var d=getServiceDebt(s.id);
+        var debtBadge;
+        if(s.archived||d.debt<=0){
+          debtBadge='<span style="background:#ecfdf5;color:#059669;border:1px solid #bbf7d0;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;margin-left:6px">✓ Εξοφλήθηκε</span>';
+        } else if(d.paid>0){
+          debtBadge='<span style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;margin-left:6px">◑ Χρωστά: '+fmt(d.debt)+'</span>';
+        } else if(d.expired){
+          debtBadge='<span style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;margin-left:6px">✕ Ανεξόφλητη</span>';
+        } else {
+          debtBadge='<span style="background:var(--bg3);color:var(--t3);border:1px solid var(--bd);padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;margin-left:6px">○ Αναμενόμενη</span>';
+        }
+        svcRows+='<div class="svc-row">'
+          +'<div>'
+            +'<div class="svc-name">'+s.name+(s.periodValue?' — '+s.periodValue:'')+(s.year?' '+s.year:'')+'</div>'
+            +'<div class="svc-meta">'+(PERIOD_LABELS[s.periodicity]||'')+' · Τιμή: '+fmt(d.price)+' · Πληρωμένο: '+fmt(d.paid)+debtBadge+'</div>'
+          +'</div>'
+          +'<div style="display:flex;align-items:center;gap:8px">'
+            +'<button class="btn btn-sm btn-outline" onclick="editService(\'' + s.id + '\')">✎</button>'
+            +'<button class="btn btn-sm btn-danger" onclick="deleteService(\'' + s.id + '\')">✕</button>'
+          +'</div>'
+        +'</div>';
+      });
+    } else {
+      svcRows='<div style="padding:16px 0;color:var(--t3);font-size:13px">Δεν υπάρχουν υπηρεσίες.</div>';
+    }
+    html+='<div class="client-card">'
+      +'<div class="client-card-header" onclick="toggleClientBody(\'cb-'+c.id+'\')">'
+        +'<div class="client-info">'
+          +'<div class="avatar">'+initials+'</div>'
+          +'<div>'
+            +'<div class="client-name">'+c.name+debtLabel+'</div>'
+            +'<div class="client-meta">ΑΦΜ: '+c.afm+(c.phone?' · '+c.phone:'')+(c.email?' · '+c.email:'')+'</div>'
+          +'</div>'
+        +'</div>'
+        +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
+          +'<span class="badge badge-gray">'+svcs.length+' υπηρ.</span>'
+          +'<button class="btn btn-sm btn-outline" onclick="event.stopPropagation();showClientHistory(\'' + c.id + '\')">📋 Ιστορικό</button>'
+          +'<button class="btn btn-sm btn-outline" onclick="event.stopPropagation();editClient(\'' + c.id + '\')">✎</button>'
+          +'<button class="btn btn-sm btn-outline" onclick="event.stopPropagation();openServiceModal(\'' + c.id + '\')">+ Υπηρεσία</button>'
+          +'<button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteClient(\'' + c.id + '\')">Διαγραφή</button>'
+        +'</div>'
+      +'</div>'
+      +'<div id="cb-'+c.id+'" class="client-body" style="display:none">'+svcRows+'</div>'
+    +'</div>';
+  });
+  el.innerHTML=html;
+}
 function toggleClientBody(id){const el=document.getElementById(id);el.style.display=el.style.display==='none'?'block':'none';}
 
 function deleteClient(id){
@@ -1030,6 +1221,19 @@ function saveReceipt(){
   closeModal('modal-receipt');
   document.getElementById('r-edit-id').value='';
   document.querySelector('#modal-receipt .modal-title').textContent='Καταγραφή Είσπραξης';
+  // Auto-archive service if fully paid
+  if(serviceId){
+    var d=getServiceDebt(serviceId);
+    if(d.debt<=0){
+      var svcs=getServices();
+      var si=svcs.findIndex(function(s){return s.id===serviceId;});
+      if(si>-1 && !svcs[si].archived){
+        svcs[si].archived=true;
+        save('services',svcs);
+        toast('Η υπηρεσία εξοφλήθηκε και αρχειοθετήθηκε! ✓','success');
+      }
+    }
+  }
   renderPage(currentTab);
 }
 function editReceipt(id){
@@ -1145,17 +1349,79 @@ function deleteReminder(id){
 }
 
 // ===== DASHBOARD =====
+// ===== DEBT HELPERS =====
+// ===== PERIOD EXPIRY CHECK =====
+var MONTH_MAP={'Ιανουάριος':0,'Φεβρουάριος':1,'Μάρτιος':2,'Απρίλιος':3,'Μάιος':4,'Ιούνιος':5,'Ιούλιος':6,'Αύγουστος':7,'Σεπτέμβριος':8,'Οκτώβριος':9,'Νοέμβριος':10,'Δεκέμβριος':11};
+var QUARTER_END={"Α' Τρίμηνο":2,"Β' Τρίμηνο":5,"Γ' Τρίμηνο":8,"Δ' Τρίμηνο":11};
+var SEMI_END={"Α' Εξάμηνο":5,"Β' Εξάμηνο":11};
+function isPeriodExpired(s){
+  if(!s.year) return false;
+  var now=new Date(),ny=now.getFullYear(),nm=now.getMonth();
+  var sy=parseInt(s.year);if(isNaN(sy)) return false;
+  if(sy<ny) return true;if(sy>ny) return false;
+  var p=s.periodicity,pv=s.periodValue||'';
+  if(p==='monthly'){var m=MONTH_MAP[pv];return m!==undefined&&m<nm;}
+  if(p==='quarterly'){var e=QUARTER_END[pv];return e!==undefined&&e<nm;}
+  if(p==='semiannually'){var e2=SEMI_END[pv];return e2!==undefined&&e2<nm;}
+  return false;
+}
+function getServiceDebt(serviceId){
+  var allSvcs=load('services');
+  var s=allSvcs.find(function(x){return x.id===serviceId;});
+  if(!s) return {price:0,paid:0,debt:0,expired:false};
+  var price=parseFloat(s.price||0);
+  var paid=getReceipts().filter(function(r){return r.serviceId===serviceId;}).reduce(function(sum,r){return sum+parseFloat(r.amount||0);},0);
+  return {price:price,paid:paid,debt:Math.max(0,price-paid),expired:isPeriodExpired(s)};
+}
+function getTotalDebt(){
+  return getServices().reduce(function(sum,s){
+    var d=getServiceDebt(s.id);
+    if(d.debt<=0) return sum;
+    if(d.expired||d.paid>0) return sum+d.debt;
+    return sum;
+  },0);
+}
+function getClientDebt(clientId){return getServices().filter(function(s){return s.clientId===clientId;}).reduce(function(sum,s){return sum+getServiceDebt(s.id).debt;},0);}
+
 function renderDashboard(){
-  const receipts=getReceipts();const services=getServices();
-  const total=receipts.reduce((s,r)=>s+r.amount,0);
+  const receipts=getReceipts();const services=getServices();const allSvcs=getAllServices();
+  const total=receipts.reduce(function(s,r){return s+parseFloat(r.amount||0);},0);
   const now=new Date();const m=now.getMonth();const y=now.getFullYear();
-  const monthly=receipts.filter(r=>{const d=new Date(r.date);return d.getMonth()===m&&d.getFullYear()===y;}).reduce((s,r)=>s+r.amount,0);
-  const annualExp=services.reduce((s,sv)=>s+parseFloat(sv.price||0),0);
+  const monthly=receipts.filter(function(r){const d=new Date(r.date);return d.getMonth()===m&&d.getFullYear()===y;}).reduce(function(s,r){return s+parseFloat(r.amount||0);},0);
+  const yearForecast=allSvcs.filter(function(sv){return String(sv.year)==String(y);}).reduce(function(s,sv){return s+parseFloat(sv.price||0);},0);
+  // Αναμενόμενες = ενεργές υπηρεσίες με υπόλοιπο
+  const pendingExp=services.reduce(function(s,sv){return s+getServiceDebt(sv.id).debt;},0);
+  const totalDebt=getTotalDebt();
+  const forecastPct=yearForecast>0?Math.min(100,Math.round(total/yearForecast*100)):0;
+
   document.getElementById('stats-grid').innerHTML=`
     <div class="stat-card"><div class="stat-ico" style="background:#ecfdf5"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div><div class="stat-lbl">Συνολικές Εισπράξεις</div><div class="stat-val">${fmt(total)}</div></div></div>
     <div class="stat-card"><div class="stat-ico" style="background:#eff6ff"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div><div class="stat-lbl">Εισπράξεις Μήνα</div><div class="stat-val">${fmt(monthly)}</div></div></div>
-    <div class="stat-card"><div class="stat-ico" style="background:#f5f3ff"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div><div><div class="stat-lbl">Αναμενόμενα Ετήσια</div><div class="stat-val">${fmt(annualExp)}</div></div></div>
-    <div class="stat-card"><div class="stat-ico" style="background:#fafaf8;border:1px solid var(--bd)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--t2)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div><div class="stat-lbl">Πλήθος Εγγραφών</div><div class="stat-val">${receipts.length}</div></div></div>`;
+    <div class="stat-card"><div class="stat-ico" style="background:#f5f3ff"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div><div><div class="stat-lbl">Αναμενόμενες Εισπράξεις</div><div class="stat-val">${fmt(pendingExp)}</div></div></div>
+    <div class="stat-card" style="cursor:pointer" onclick="showTab('debts')"><div class="stat-ico" style="background:#fef2f2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div><div class="stat-lbl">Συνολικές Οφειλές</div><div class="stat-val" style="color:${totalDebt>0?'#dc2626':'#059669'}">${fmt(totalDebt)}</div></div></div>`;
+
+  // Forecast progress bar
+  const fbar=document.getElementById('forecast-bar-section');
+  if(fbar){
+    fbar.innerHTML=`
+    <div class="card card-pad" style="margin-bottom:24px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div>
+          <span class="card-title">Ετήσιο Forecast ${y}</span>
+          <span style="font-size:12px;color:var(--t3);margin-left:10px">${fmt(total)} από ${fmt(yearForecast)}</span>
+        </div>
+        <span style="font-size:18px;font-weight:700;color:${forecastPct>=100?'#059669':forecastPct>=50?'#2563eb':'#d97706'}">${forecastPct}%</span>
+      </div>
+      <div style="background:var(--bg3);border-radius:99px;height:12px;overflow:hidden">
+        <div style="height:100%;border-radius:99px;width:${forecastPct}%;background:${forecastPct>=100?'#059669':forecastPct>=50?'#2563eb':'#d97706'};transition:width .5s ease"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--t3)">
+        <span>Εισπράχθηκαν: <b style="color:var(--t1)">${fmt(total)}</b></span>
+        <span>Απομένουν: <b style="color:var(--t1)">${fmt(Math.max(0,yearForecast-total))}</b></span>
+        <span>Στόχος: <b style="color:var(--t1)">${fmt(yearForecast)}</b></span>
+      </div>
+    </div>`;
+  }
 
   // Recent receipts
   const recent=receipts.slice(0,6);
